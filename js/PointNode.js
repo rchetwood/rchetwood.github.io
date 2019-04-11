@@ -1,34 +1,37 @@
 'use strict'
 
+const { Node } = require('./Node')
+
 /**
    An inivisible node that is used in the toolbar to draw an edge.
    Implements Node
 */
 function PointNode () {
   // Constructs a point node with coordinates (0, 0)
-  let point = { x: 0, y: 0 }
+  const pn = Node()
+  pn.point = { x: 0, y: 0 }
   return {
     draw: () => {
       return undefined
     },
     translate: (dx, dy) => {
-      point.x += dx
-      point.y += dy
+      pn.point.x += dx
+      pn.point.y += dy
     },
     contains: (p) => {
       return false
     },
     getBounds: () => {
-      return { x: point.x, y: point.y, width: 0, height: 0 }
+      return { x: pn.point.x, y: pn.point.y, width: 0, height: 0 }
     },
     getConnectionPoint: (other) => {
-      return point
+      return pn.point
     },
     clone: () => {
       let temp
       try {
         // TODO
-        // temp = super.clone()
+        temp = pn.clone()
       } catch (err) {
         return undefined
       }
