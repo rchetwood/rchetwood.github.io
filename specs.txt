@@ -1,0 +1,13 @@
+Project Specifications:
+
+Diagram Type: 
+Class
+
+Object Type:
+Hard Objects
+
+Element Type:
+SVG
+
+HTML:
+No HTML Tables;
