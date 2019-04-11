@@ -1,0 +1,7 @@
+*.java
+*.class
+*.json
+**/.project
+**/.classpath
+**/.settings
+/kuor/java/*
