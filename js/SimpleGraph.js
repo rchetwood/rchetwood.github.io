@@ -5,6 +5,10 @@ const { CircleNode } = require('./CircleNode')
 const { DiamondNode } = require('./DiamondNode')
 const { LineEdge } = require('./LineEdge')
 
+/**
+   A simple graph with round nodes and straight edges.
+   Extends Graph
+*/
 function SimpleGraph () {
   return {
     getNodePrototypes: () => {
