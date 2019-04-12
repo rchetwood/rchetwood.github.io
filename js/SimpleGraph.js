@@ -30,8 +30,8 @@ function SimpleGraph () {
     connect: (e, p1, p2) => {
       return sg.connect(e, p1, p2)
     },
-    add: (n,p) => {
-      return sg.add(n,p)
+    add: (n, p) => {
+      return sg.add(n, p)
     },
     findNode: (p) => {
       return sg.findNode(p)
@@ -56,7 +56,7 @@ function SimpleGraph () {
     },
     getEdges: () => {
       return sg.nodes
-    },
+    }
   }
 }
 
