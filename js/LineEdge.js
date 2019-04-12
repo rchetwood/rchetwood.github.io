@@ -5,7 +5,7 @@
    Extends AbstractEdge
 */
 function LineEdge () {
-
+  let lineStyle = SOLID
 }
 
 module.exports = {
