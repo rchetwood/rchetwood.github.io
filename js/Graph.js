@@ -81,13 +81,6 @@ function Graph(){
         },
         getEdges: () =>{
             return this.edges
-        },
-        //there are also abstract methods
-        getNodePrototype: ()=>{
-
-        },
-        getEdgePrototype: ()=>{
-
         }
     }
 }
