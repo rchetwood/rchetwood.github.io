@@ -114,14 +114,14 @@ function GraphPanel(Toolbar, Graph){
         },
         drawGrabber: (x, y)=>{
             const size = 5;
-                const panel = document.getElementById('graphpanel')
-                const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
-                rect.setAttribute('x', x - size / 2)
-                rect.setAttribute('y', y - size / 2)
-                rect.setAttribute('width', size )
-                rect.setAttribute('height', size )
-                rect.setAttribute('fill', 'black')
-                panel.appendChild(rect)
+            const panel = document.getElementById('graphpanel')
+            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
+            rect.setAttribute('x', x - size / 2)
+            rect.setAttribute('y', y - size / 2)
+            rect.setAttribute('width', size )
+            rect.setAttribute('height', size )
+            rect.setAttribute('fill', 'black')
+            panel.appendChild(rect)
           
         },
         getPrefferedSize: () =>{
@@ -133,3 +133,5 @@ function GraphPanel(Toolbar, Graph){
         }
     }
 }
+
+module.exports = GraphPanel

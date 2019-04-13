@@ -1,3 +1,5 @@
+'use strict'
+
 function EnumEditor(cl){
     let cl = cl
     return{

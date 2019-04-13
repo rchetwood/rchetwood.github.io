@@ -2,6 +2,7 @@
 
 //include node
 const {Node} = requires("./Node")
+
 function Graph(){
     const nodes = []
     const edges = []
