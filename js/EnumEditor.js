@@ -1,3 +1,5 @@
+'use strict'
+
 function EnumEditor(cl){
     let cl = cl
     return{
@@ -17,6 +19,14 @@ function EnumEditor(cl){
             catch(err){
                 return undefined
             }
+        },
+        getAsText: ()=>{
+            //return getValue().toString();
+        },
+        setAsText: () =>{
+            //setValue(Enum.valueOf(cl, s));
         }
     }
 }
+
+module.exports = EnumEditor
