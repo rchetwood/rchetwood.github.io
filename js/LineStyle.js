@@ -2,21 +2,23 @@
 
 /**
    This class defines line styles of various shapes.
+   Skip dotted Line for now.
 */
 function LineStyle () {
   const styles = {
     SOLID = 'solid',
-    DOTTED = 'dotted'
+    // DOTTED = 'dotted'
   }
   // TODO
-  const SOLID_STROKE = undefined
-  const DOTTED_STROKE = undefined
+  // How to define these with SVG?
+  const SOLID_STROKE = document.createElementNS('http://www.w3.org/2000/svg', 'line')
+  // const DOTTED_STROKE = undefined
   return {
     getStroke: () => {
-      if (this === DOTTED) { 
-        return DOTTED_STROKE 
-      }
-      if (this === SOLID) { 
+      // if (this === styles.DOTTED) { 
+      //   return DOTTED_STROKE 
+      // }
+      if (this === styles.SOLID) { 
         return SOLID_STROKE 
       }
       return undefined

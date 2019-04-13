@@ -30,7 +30,6 @@ function PointNode () {
     clone: () => {
       let temp
       try {
-        // TODO
         temp = pn.clone()
       } catch (err) {
         return undefined
