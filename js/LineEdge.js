@@ -8,10 +8,12 @@ const { AbstractEdge } = require('./AbstractEdge')
    Extends AbstractEdge
 */
 function LineEdge () {
-  let lineStyle = LineStyle.styles.SOLID
+  let ls = LineStyle()
   let le = AbstractEdge()
+  ls.styles = SOLID
   return {
     draw: () => {
+      const stroke = ls.getStroke()
       const panel = document.getElementById('graphpanel')
       const line = document.createElementNS('http://www.w3.org/2000/svg', 'line')
       const ps = getConnectionPoints()
@@ -19,6 +21,12 @@ function LineEdge () {
       line.setAttribute('x2', ps.end.x)
       line.setAttribute('y1', ps.start.y)
       line.setAttribute('y2', ps.end.y)
+      if (ls.styles === SOLID) {
+        line.setAttribute('stroke-dasharray', stroke)
+      }
+      if (ls.styles === DOTTED) {
+        line.setAttribute('stroke-dasharray', stroke)
+      }
       panel.appendChild(line)
     },
     contains: (aPoint) => {
@@ -37,10 +45,10 @@ function LineEdge () {
       return Math.sqrt(dist)
     },
     setLineStyle: (newValue) => {
-      lineStyle = newValue
+      ls.styles = newValue
     },
     getLineStyle: () => {
-      return lineStyle
+      return ls.styles
     },
     clone: () => {
       return le.clone()
