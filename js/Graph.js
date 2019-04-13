@@ -1,3 +1,7 @@
+'use strict'
+
+//include node
+const {Node} = requires("./Node")
 function Graph(){
     const nodes = []
     const edges = []
@@ -86,3 +90,5 @@ function Graph(){
         }
     }
 }
+
+module.exports = Graph
