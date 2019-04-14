@@ -7,6 +7,7 @@ const { SimpleGraph } = require('./SimpleGraph')
 
 /**
    A program for editing UML diagrams.
+   Sets the basic frame.
 */
 function SimpleGraphEditor () {
   const frame = GraphFrame(SimpleGraph())
