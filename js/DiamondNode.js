@@ -1,4 +1,6 @@
-function createDiamondNode (x, y, size, color) {
+'use strict'
+
+function DiamondNode (x, y, size, color) {
   return {
     getBounds: () => {
       return {
@@ -28,4 +30,8 @@ function createDiamondNode (x, y, size, color) {
       panel.appendChild(diamond)
     }
   }
+}
+
+module.exports = {
+  DiamondNode
 }

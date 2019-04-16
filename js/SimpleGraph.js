@@ -9,10 +9,12 @@ const { Graph } = require('./Graph')
 
 /**
    A simple graph with round nodes and straight edges.
-   Extends Graph
+   Extends Graph in Java
 */
 function SimpleGraph () {
   const sg = Graph()
+  nodes = sg.nodes
+  edges = sg.edges
   return {
     getNodePrototypes: () => {
       let nodeTypes = []
@@ -51,12 +53,6 @@ function SimpleGraph () {
     getBounds: () => {
       return sg.getBounds()
     },
-    getNodes: () => {
-      return sg.nodes
-    },
-    getEdges: () => {
-      return sg.edges
-    }
   }
 }
 

@@ -2,7 +2,7 @@
 
 /**
    This class defines line styles of various shapes.
-   Skip dotted Line for now.
+   THIS FILE MAY BE UNNECESSARY
 */
 function LineStyle () {
   const styles = {

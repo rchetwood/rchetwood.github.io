@@ -1,4 +1,6 @@
-function createCircleNode (x, y, size, color) {
+'use strict'
+
+function CircleNode (x, y, size, color) {
     return {
       getBounds: () => {
         return {
@@ -25,4 +27,8 @@ function createCircleNode (x, y, size, color) {
         panel.appendChild(circle)
       }
     }
+  }
+
+  module.exports = {
+    CircleNode
   }

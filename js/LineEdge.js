@@ -1,19 +1,15 @@
 'use strict'
 
-const { LineStyle } = require('./LineStyle')
-const { AbstractEdge } = require('./AbstractEdge')
-
 /**
    An edge that is shaped like a straight line.
-   Extends AbstractEdge
+   Extends AbstractEdge in Java
 */
 function LineEdge () {
-  let ls = LineStyle()
-  let le = AbstractEdge()
-  ls.styles = SOLID
+  let stroke = 'SOLID'
+  let start, end
+  let arrow = {type: undefined, at: undefined}
   return {
     draw: () => {
-      const stroke = ls.getStroke()
       const panel = document.getElementById('graphpanel')
       const line = document.createElementNS('http://www.w3.org/2000/svg', 'line')
       const ps = getConnectionPoints()
@@ -21,11 +17,11 @@ function LineEdge () {
       line.setAttribute('x2', ps.end.x)
       line.setAttribute('y1', ps.start.y)
       line.setAttribute('y2', ps.end.y)
-      if (ls.styles === SOLID) {
-        line.setAttribute('stroke-dasharray', stroke)
+      if (stroke === 'SOLID') {
+        line.setAttribute('stroke-dasharray', 0)
       }
-      if (ls.styles === DOTTED) {
-        line.setAttribute('stroke-dasharray', stroke)
+      if (stroke === 'DOTTED') {
+        line.setAttribute('stroke-dasharray', 4)
       }
       panel.appendChild(line)
     },
@@ -44,29 +40,41 @@ function LineEdge () {
       let dist = (p.x - p2.x)**2 + (p.y - p2.y)**2 
       return Math.sqrt(dist)
     },
-    setLineStyle: (newValue) => {
-      ls.styles = newValue
-    },
-    getLineStyle: () => {
-      return ls.styles
-    },
     clone: () => {
-      return le.clone()
+      let cloneLE = AbstractEdge()
+      cloneLE.start = start
+      cloneLE.end = end
+      return cloneLE
     },
     connect: (s, e) => {
-      le.connect(s, e)
+      start = s
+      end = e
     },
-    getStart: () => {
-      return le.getStart()
-    },
-    getEnd: () => {
-      return le.getEnd()
-    },
-    getBounds: (g2) => {
-      return le.getBounds(g2)
+    getBounds: () => {
+      let bx, by, bw, bh
+      if (start.x <= end.x){
+        bx = start.x
+        bw = end.x-start.x
+      } else {
+        bx = end.x
+        bw = start.x-end.x
+      }
+      if (start.y <= end.y){
+        by = start.y
+        bh = end.y-start.y
+      } else {
+        by = end.y
+        bh = start.y-end.y
+      }
+      return { x: bx, y: by, width: bw, height: bh }
     },
     getConnectionPoints: () => {
-      return le.getConnectionPoints()
+      let sB = start.getBounds()
+      let eB = end.getBounds()
+      let sC = {x: sB.x+sB.width/2, y: sB.y+sB.height/2}
+      let eC = {x: eB.x+eB.width/2, y: eB.y+eB.height/2}
+      //return {start: start.getConnectionPoints(sC), end: end.getConnectionPoints(eC)}
+      return {start: start, end: end}
     }
   }
 }
