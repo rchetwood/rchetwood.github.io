@@ -12,24 +12,32 @@
       <svg id='graphpanel' xmlns='http://www.w3.org/2000/svg'></svg>
       <input id="file-input" type="file" name="name" style="display: none;" />
       <div class="w3-dropdown-click">
-          <button onclick="myFunction()" class="w3-button w3-black">File</button>
+          <button onclick="myFunction('Demo')" class="w3-button w3-black">File</button>
           <div id="Demo" class="w3-dropdown-content w3-bar-block w3-border">
             <a onclick="document.getElementById('file-input').click();" class="w3-bar-item w3-button">Open</a>
             <a href="#" class="w3-bar-item w3-button">Save</a>
             <a href="#" class="w3-bar-item w3-button">Exit</a>
           </div>
+      </div>
+      
+      <div class="w3-dropdown-click">
+        <button onclick="myFunction('Demo1')" class="w3-button w3-black">Edit</button>
+            <div id="Demo1" class="w3-dropdown-content w3-bar-block w3-border">
+            <a href="#" class="w3-bar-item w3-button">Delete</a>
+            <a href="#" class="w3-bar-item w3-button">Properties</a>
         </div>
-    </div>
+      </div>
       
       <script>
-      function myFunction() {
-        var x = document.getElementById("Demo");
+      function myFunction(idName) {
+        var x = document.getElementById(idName);
         if (x.className.indexOf("w3-show") == -1) {
           x.className += " w3-show";
         } else { 
           x.className = x.className.replace(" w3-show", "");
         }
       }
+
       </script>
   </body>
 </html>
