@@ -73,8 +73,8 @@ function LineEdge () {
       let eB = end.getBounds()
       let sC = {x: sB.x+sB.width/2, y: sB.y+sB.height/2}
       let eC = {x: eB.x+eB.width/2, y: eB.y+eB.height/2}
-      //return {start: start.getConnectionPoints(sC), end: end.getConnectionPoints(eC)}
-      return {start: start, end: end}
+      return {start: start.getConnectionPoint(sC), end: end.getConnectionPoint(eC)}
+      //return {start: start, end: end}
     }
   }
 }

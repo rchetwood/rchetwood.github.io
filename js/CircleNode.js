@@ -1,7 +1,30 @@
 'use strict'
 
-function CircleNode (x, y, size, color) {
+function CircleNode (color) {
+  let x, y
+  let size = 10
+  this.color = color
     return {
+      getConnectionPoint: (p) => {
+        let cx = x + size/2
+        let cy = y + size/2
+        let dx = p.x - cx
+        let dy = p.y - cy
+        let dist = Math.sqrt(dx**2 + dy**2)
+        if (dist === 0) {
+          return other
+        } else {
+          return { x: cc + dx * (size / 2) / dist, y: cy + dy * (size / 2) / dist }
+        }
+      },
+      clone: () => {
+        let cloneCN = CircleNode()
+        cloneCN.x = x
+        cloneCN.y = y
+        cloneCN.size = size
+        cloneCN.color = this.color
+        return cloneCN
+      },
       getBounds: () => {
         return {
           x: x,
@@ -23,7 +46,7 @@ function CircleNode (x, y, size, color) {
         circle.setAttribute('cx', x + size / 2)
         circle.setAttribute('cy', y + size / 2)
         circle.setAttribute('r', size / 2)
-        circle.setAttribute('fill', color)
+        circle.setAttribute('fill', this.color)
         panel.appendChild(circle)
       }
     }
