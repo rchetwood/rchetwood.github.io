@@ -4,18 +4,31 @@
    An edge that is shaped like a line.
    Extends AbstractEdge in Java
 */
+function center (rect) {
+  return { x: rect.x + rect.width / 2, 
+    y: rect.y + rect.height / 2 }
+}
+
+function getConnectionPoints (start, end) {
+  const sB = start.getBounds()
+  const eB = end.getBounds()
+  const sC = center(sB)
+  const eC = center(eB)
+  //return { start: start.getConnectionPoint(sC), end: end.getConnectionPoint(eC) }
+  return { start: sC, end: eC }
+}
+
 function createLineEdge () {
   let start, end
   return {
     draw: () => {
-      const b1 = start.getBounds()
-      const b2 = end.getBounds()
+      const ps = getConnectionPoints(start, end)
       const panel = document.getElementById('graphpanel')
       const line = document.createElementNS('http://www.w3.org/2000/svg', 'line')
-      line.setAttribute('x1', b1.x)
-      line.setAttribute('y1', b1.y)
-      line.setAttribute('x2', b2.x)
-      line.setAttribute('y2', b2.y)
+      line.setAttribute('x1', ps.start.x)
+      line.setAttribute('y1', ps.start.y)
+      line.setAttribute('x2', ps.end.x)
+      line.setAttribute('y2', ps.end.y)
       line.setAttribute('stroke', 'black')
       panel.appendChild(line)
     },
