@@ -203,7 +203,7 @@ function createLineEdge () {
     },
     contains: (aPoint) => {
       const MAX_DIST = 2
-      return this.ptSegDist(this.getConnectionPoints(), aPoint) < MAX_DIST
+      return ptSegDist(getConnectionPoints(start, end), aPoint) < MAX_DIST
     },
     getBounds: () => {
       let bx, by, bw, bh
