@@ -11,7 +11,7 @@ function createDiamondNode (x,y,size,color) {
       if (dist === 0) {
         return other
       } else {
-        return { x: cc + dx * (size / 2) / dist, y: cy + dy * (size / 2) / dist }
+        return { x: cx + dx * (size / 2) / dist, y: cy + dy * (size / 2) / dist }
       }
     },
     clone: () => {

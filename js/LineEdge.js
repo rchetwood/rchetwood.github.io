@@ -14,7 +14,7 @@ function getConnectionPoints (start, end) {
   const eB = end.getBounds()
   const sC = center(sB)
   const eC = center(eB)
-  return { start: start.getConnectionPoint(sC), end: end.getConnectionPoint(eC) }
+  return { start: start.getConnectionPoint(eC), end: end.getConnectionPoint(sC) }
 }
 
 function rotate (c, p, angle) {
@@ -231,7 +231,7 @@ function createLineEdge () {
       const eB = end.getBounds()
       const sC = center(sB)
       const eC = center(eB)
-      return { start: start.getConnectionPoint(sC), end: end.getConnectionPoint(eC) }
+      return { start: start.getConnectionPoint(eC), end: end.getConnectionPoint(sC) }
     }
   }
 }
