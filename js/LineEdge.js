@@ -206,20 +206,23 @@ function createLineEdge () {
       return ptSegDist(getConnectionPoints(start, end), aPoint) < MAX_DIST
     },
     getBounds: () => {
+      const ps = getConnectionPoints(start, end)
+      let s = ps.start
+      let e = ps.end
       let bx, by, bw, bh
-      if (start.x <= end.x) {
-        bx = start.x
-        bw = end.x - start.x
+      if (s.x <= e.x) {
+        bx = s.x
+        bw = e.x - s.x
       } else {
-        bx = end.x
-        bw = start.x - end.x
+        bx = e.x
+        bw = s.x - e.x
       }
-      if (start.y <= end.y) {
-        by = start.y
-        bh = end.y - start.y
+      if (s.y <= e.y) {
+        by = s.y
+        bh = e.y - s.y
       } else {
-        by = end.y
-        bh = start.y - end.y
+        by = s.y
+        bh = e.y - s.y
       }
       return { x: bx, y: by, width: bw, height: bh }
     },
