@@ -26,12 +26,21 @@ function GraphPanel(Toolbar, Graph){
             panel.innerHTML = ''
             graph.draw()
             if (selected !== undefined) {
-              const bounds = selected.getBounds()
-              drawGrabber(bounds.x, bounds.y)
-              drawGrabber(bounds.x + bounds.width, bounds.y)
-              drawGrabber(bounds.x, bounds.y + bounds.height)      
-              drawGrabber(bounds.x + bounds.width, bounds.y + bounds.height)
-            }    
+                // This line should theoretically work, but currently doesnt.
+                if (selected instanceof createLineEdge) {
+                    const cps = selected.getConnectionPoints()
+                    const s = cps.start
+                    const e = cps.end
+                    drawGrabber(s.x, s.y)
+                    drawGrabber(e.x, e.y)
+                  } else {
+                    const bounds = selected.getBounds()
+                    drawGrabber(bounds.x, bounds.y)
+                    drawGrabber(bounds.x + bounds.width, bounds.y)
+                    drawGrabber(bounds.x, bounds.y + bounds.height)
+                    drawGrabber(bounds.x + bounds.width, bounds.y + bounds.height)
+                  }
+                }    
           }
           
           let dragStartPoint = undefined
@@ -42,7 +51,10 @@ function GraphPanel(Toolbar, Graph){
             dragStartPoint = mousePoint
             selected = graph.findNode(mousePoint)
             if (selected){
-               dragStartBounds = selected.getBounds()}
+              dragStartBounds = selected.getBounds()
+            } else {
+              selected = graph.findEdge(mousePoint)
+            }
             repaint()
           })
         
