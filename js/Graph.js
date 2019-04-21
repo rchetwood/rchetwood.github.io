@@ -1,15 +1,20 @@
 'use strict'
 
-//include node
-const {Node} = requires("./Node")
+function findNode (p, nodes) {
+    for(let i = nodes.length -1; i >= 0; i--){
+        const n = this.nodes[i]
+        if(n.contains(p)) return n
+    }
+    return undefined
+}
 
 function Graph(){
     const nodes = []
     const edges = []
     return{
         connect: (edge, point1, point2) => {
-            let n1 = findNode(point1)
-            let n2 = findNode(point2)
+            let n1 = findNode(point1, nodes) // wont be able to use own function
+            let n2 = findNode(point2, nodes)
             if (n1 !== undefined && n2 != undefined)
             {
                edge.connect(n1, n2)
@@ -27,16 +32,14 @@ function Graph(){
         } ,
         findNode: (p) =>{
             for(let i = nodes.length -1; i >= 0; i--){
-                let n = Node()
-                n = nodes[i]
+                const n = this.nodes[i]
                 if(n.contains(p)) return n
             }
             return undefined
         },
         findEdge: (p) =>{
             for(let i = edges.length -1; i >= 0; i--){
-                let e = Edge()
-                e = edges[i]
+                const e = this.edges[i]
                 if(e.contains(p)) return e
             }
             return undefined
@@ -51,8 +54,7 @@ function Graph(){
         },
         removeNode: (n) =>{
             for(let i = edges.length -1; i >= 0; i--){
-                let e = Edge()
-                e = edges[i]
+                const e = this.edges[i]
                 if(e.getStart() === n || e.getEnd() === n){
                     edges.remove(e)
                 }
@@ -85,4 +87,4 @@ function Graph(){
     }
 }
 
-module.exports = Graph
+module.exports = { Graph }
