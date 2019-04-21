@@ -9,14 +9,6 @@ function center (rect) {
     y: rect.y + rect.height / 2 }
 }
 
-function getConnectionPoints (start, end) {
-  const sB = start.getBounds()
-  const eB = end.getBounds()
-  const sC = center(sB)
-  const eC = center(eB)
-  return { start: start.getConnectionPoint(eC), end: end.getConnectionPoint(sC) }
-}
-
 function rotate (c, p, angle) {
   // rotate p by angle at c
   let radians = (Math.PI / 180) * angle
@@ -53,12 +45,12 @@ function ptSegDist (ps, p) {
 function createLineEdge () {
   let start, end
   let stroke = 'DOTTED' // SOLID, DOTTED
-  let type = 'HVEDGE' // LINE, HVEDGE, VHEDGE
-  let startArrow = 'CLOSE' // NONE, DIAMOND, OPEN, CLOSE
-  let endArrow = 'OPEN' // NONE, DIAMOND, OPEN, CLOSE
+  let type = 'LINE' // LINE, HVEDGE, VHEDGE
+  let startArrow = 'DIAMOND' // NONE, DIAMOND, OPEN, CLOSE
+  let endArrow = 'DIAMOND' // NONE, DIAMOND, OPEN, CLOSE
   return {
-    draw: () => {
-      const ps = getConnectionPoints(start, end)
+    draw: function()  {
+      const ps = this.getConnectionPoints()
       const panel = document.getElementById('graphpanel')
       // LINE EDGE TYPE: LINE, HVEDGE, VHEDGE
       let line, bend, sa, ea
@@ -191,7 +183,7 @@ function createLineEdge () {
         panel.appendChild(ea)
       }
     },
-    connect: (s, e) => {
+    connect: function(s, e) {
       start = s
       end = e
     },
@@ -201,12 +193,12 @@ function createLineEdge () {
       cloneLE.end = end
       return cloneLE
     },
-    contains: (aPoint) => {
+    contains: function(aPoint) {
       const MAX_DIST = 2
-      return ptSegDist(getConnectionPoints(start, end), aPoint) < MAX_DIST
+      return ptSegDist(this.getConnectionPoints(), aPoint) < MAX_DIST
     },
-    getBounds: () => {
-      const ps = getConnectionPoints(start, end)
+    getBounds: function() {
+      const ps = this.getConnectionPoints()
       let s = ps.start
       let e = ps.end
       let bx, by, bw, bh
@@ -226,7 +218,7 @@ function createLineEdge () {
       }
       return { x: bx, y: by, width: bw, height: bh }
     },
-    getConnectionPoints: () => {
+    getConnectionPoints: function() {
       const sB = start.getBounds()
       const eB = end.getBounds()
       const sC = center(sB)
