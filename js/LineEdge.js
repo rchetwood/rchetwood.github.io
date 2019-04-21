@@ -52,10 +52,10 @@ function ptSegDist (ps, p) {
 
 function createLineEdge () {
   let start, end
-  let stroke = 'SOLID' // SOLID, DOTTED
-  let type = 'LINE' // LINE, HVEDGE, VHEDGE
-  let startArrow = 'NONE' // NONE, DIAMOND, OPEN, CLOSE
-  let endArrow = 'NONE' // NONE, DIAMOND, OPEN, CLOSE
+  let stroke = 'DOTTED' // SOLID, DOTTED
+  let type = 'HVEDGE' // LINE, HVEDGE, VHEDGE
+  let startArrow = 'CLOSE' // NONE, DIAMOND, OPEN, CLOSE
+  let endArrow = 'OPEN' // NONE, DIAMOND, OPEN, CLOSE
   return {
     draw: () => {
       const ps = getConnectionPoints(start, end)
@@ -96,7 +96,100 @@ function createLineEdge () {
         default:
           line.setAttribute('stroke-dasharray', 0)
       }
+      // LINE POINTER TYPES: NONE, DIAMOND, OPEN, CLOSE
+      let tS, cptS, bptS, rptS, lptS
+      if (startArrow !== 'NONE') {
+        if (type !== 'LINE') {
+          tS = 5 / lineDist(ps.start, bend)
+          cptS = linePoint(ps.start, bend, tS)
+        } else {
+          tS = 5 / lineDist(ps.start, ps.end)
+          cptS = linePoint(ps.start, ps.end, tS)
+        }
+        lptS = rotate(cptS, ps.start, 90)
+        bptS = rotate(cptS, ps.start, 180)
+        rptS = rotate(cptS, ps.start, 270)
+      }
+      let tE, cptE, bptE, rptE, lptE
+      if (endArrow !== 'NONE') {
+        if (type !== 'LINE') {
+          tE = 5 / lineDist(ps.end, bend)
+          cptE = linePoint(ps.end, bend, tE)
+        } else {
+          tE = 5 / lineDist(ps.end, ps.start)
+          cptE = linePoint(ps.end, ps.start, tE)
+        }
+        lptE = rotate(cptE, ps.end, 90)
+        bptE = rotate(cptE, ps.end, 180)
+        rptE = rotate(cptE, ps.end, 270)
+      }
+      switch (startArrow) {
+        case 'DIAMOND':
+          sa = document.createElementNS('http://www.w3.org/2000/svg', 'polygon')
+          sa.setAttribute('fill', 'white')
+          sa.setAttribute('points',
+            '' + ps.start.x + ' ' + ps.start.y +
+          ' ' + lptS.x + ' ' + lptS.y +
+          ' ' + bptS.x + ' ' + bptS.y +
+          ' ' + rptS.x + ' ' + rptS.y)
+          break
+        case 'OPEN':
+          sa = document.createElementNS('http://www.w3.org/2000/svg', 'polyline')
+          sa.setAttribute('fill', 'transparent')
+          sa.setAttribute('points',
+            '' + rptS.x + ' ' + rptS.y +
+          ' ' + ps.start.x + ' ' + ps.start.y +
+          ' ' + lptS.x + ' ' + lptS.y)
+          break
+        case 'CLOSE':
+          sa = document.createElementNS('http://www.w3.org/2000/svg', 'polygon')
+          sa.setAttribute('fill', 'white')
+          sa.setAttribute('points',
+            '' + rptS.x + ' ' + rptS.y +
+          ' ' + ps.start.x + ' ' + ps.start.y +
+          ' ' + lptS.x + ' ' + lptS.y)
+          break
+        default:
+          sa = undefined
+      }
+      switch (endArrow) {
+        case 'DIAMOND':
+          ea = document.createElementNS('http://www.w3.org/2000/svg', 'polygon')
+          ea.setAttribute('fill', 'white')
+          ea.setAttribute('points',
+            '' + ps.end.x + ' ' + ps.end.y +
+          ' ' + lptE.x + ' ' + lptE.y +
+          ' ' + bptE.x + ' ' + bptE.y +
+          ' ' + rptE.x + ' ' + rptE.y)
+          break
+        case 'OPEN':
+          ea = document.createElementNS('http://www.w3.org/2000/svg', 'polyline')
+          ea.setAttribute('fill', 'transparent')
+          ea.setAttribute('points',
+            '' + rptE.x + ' ' + rptE.y +
+          ' ' + ps.end.x + ' ' + ps.end.y +
+          ' ' + lptE.x + ' ' + lptE.y)
+          break
+        case 'CLOSE':
+          ea = document.createElementNS('http://www.w3.org/2000/svg', 'polygon')
+          ea.setAttribute('fill', 'white')
+          ea.setAttribute('points',
+            '' + rptE.x + ' ' + rptE.y +
+          ' ' + ps.end.x + ' ' + ps.end.y +
+          ' ' + lptE.x + ' ' + lptE.y)
+          break
+        default:
+          ea = undefined
+      }
       panel.appendChild(line)
+      if (sa !== undefined) {
+        sa.setAttribute('stroke', 'black')
+        panel.appendChild(sa)
+      }
+      if (ea !== undefined) {
+        ea.setAttribute('stroke', 'black')
+        panel.appendChild(ea)
+      }
     },
     connect: (s, e) => {
       start = s
