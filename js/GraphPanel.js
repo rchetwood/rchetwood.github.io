@@ -134,4 +134,4 @@ function GraphPanel(Toolbar, Graph){
     }
 }
 
-module.exports = GraphPanel
+module.exports ={ GraphPanel}
