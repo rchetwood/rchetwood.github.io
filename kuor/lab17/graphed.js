@@ -22,8 +22,6 @@ document.addEventListener('DOMContentLoaded', function () {
   graph.connect(e, { x: 20, y: 20 }, { x: 40, y: 40 })
   graph.draw()
 
-  // LAB 17: ADD CODE HERE
-  // Event Listener
   function mouseLocation (event) {
     var rect = panel.getBoundingClientRect()
     return {
@@ -52,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  let selected // = undefined
+  let selected
   let dragStartPoint
   let dragStartBounds
 

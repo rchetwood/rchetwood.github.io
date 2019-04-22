@@ -23,30 +23,37 @@ document.addEventListener('DOMContentLoaded', function () {
   graph.draw()  
   
   function mouseLocation(event) {
-    var rect = panel.getBoundingClientRect();
+    var rect = panel.getBoundingClientRect()
     return {
       x: event.clientX - rect.left,
-      y: event.clientY - rect.top,
+      y: event.clientY - rect.top
     }
   }
-  
-  let selected = undefined
+
   function repaint() {
     panel.innerHTML = ''
     graph.draw()
     if (selected !== undefined) {
-      const bounds = selected.getBounds()
-      drawGrabber(bounds.x, bounds.y)
-      drawGrabber(bounds.x + bounds.width, bounds.y)
-      drawGrabber(bounds.x, bounds.y + bounds.height)      
-      drawGrabber(bounds.x + bounds.width, bounds.y + bounds.height)
+      // Need to fix this to work for the edge
+      if (selected instanceof createLineEdge) {
+        const cps = selected.getConnectionPoints()
+        const s = cps.start
+        const e = cps.end
+        drawGrabber(s.x, s.y)
+        drawGrabber(e.x, e.y)
+      } else {
+        const bounds = selected.getBounds()
+        drawGrabber(bounds.x, bounds.y)
+        drawGrabber(bounds.x + bounds.width, bounds.y)
+        drawGrabber(bounds.x, bounds.y + bounds.height)
+        drawGrabber(bounds.x + bounds.width, bounds.y + bounds.height)
+      }
     }    
   }
   
-  let dragStartPoint = undefined
-  let dragStartBounds = undefined
-  let connectStartBounds = undefined
-  let connectEndBounds = undefined
+  let selected, dragStartPoint, dragStartBounds
+  let connectStartBounds, connectEndBounds
+
   const panel = document.getElementById('graphpanel')
   panel.addEventListener('mousedown', event => {
     let mousePoint = mouseLocation(event)
@@ -54,7 +61,11 @@ document.addEventListener('DOMContentLoaded', function () {
     selected = graph.findNode(mousePoint)
     if (selected){
        dragStartBounds = selected.getBounds()
-       connectStartBounds = selected.getBounds()}
+       connectStartBounds = selected.getBounds()
+    } else {
+      // Grab Edge if not a Node
+      selected = graph.findEdge(mousePoint)
+    }
     repaint()
   })
 
@@ -75,14 +86,16 @@ document.addEventListener('DOMContentLoaded', function () {
   panel.addEventListener('mouselocation', event => {
     let mousePoint = mouseLocation(event)
     if(mousePoint){
-      
+      // TODO
     }
     repaint()
   })
 
   panel.addEventListener('mouseup', event => {
     let mousePoint = mouseLocation(event)
-    selected = graph.findNode(mousePoint)
+    if (!selected) {
+      selected = graph.findNode(mousePoint)
+    }
     if (selected){
       connectEndBounds =selected.getBounds()}
     dragStartPoint = undefined
