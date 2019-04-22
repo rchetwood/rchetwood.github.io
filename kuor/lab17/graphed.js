@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', function () {
     panel.innerHTML = ''
     graph.draw()
     if (selected) {
-      if (selected instanceof createLineEdge) {
+      if (isEdge) {
         const cps = selected.getConnectionPoints()
         const s = cps.start
         const e = cps.end
@@ -50,6 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
+  let isEdge = false
   let selected
   let dragStartPoint
   let dragStartBounds
@@ -60,8 +61,10 @@ document.addEventListener('DOMContentLoaded', function () {
     dragStartPoint = mousePoint
     selected = graph.findNode(mousePoint)
     if (selected) {
+      isEdge = false
       dragStartBounds = selected.getBounds()
     } else {
+      isEdge = true
       selected = graph.findEdge(mousePoint)
     }
     repaint()
