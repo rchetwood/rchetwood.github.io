@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function () {
     graph.draw()
     if (selected !== undefined) {
       // Need to fix this to work for the edge
-      if (selected instanceof createLineEdge) {
+      if (isEdge) {
         const cps = selected.getConnectionPoints()
         const s = cps.start
         const e = cps.end
@@ -51,6 +51,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }    
   }
   
+  let isEdge = false
   let selected, dragStartPoint, dragStartBounds
   let connectStartBounds, connectEndBounds
 
@@ -60,10 +61,12 @@ document.addEventListener('DOMContentLoaded', function () {
     dragStartPoint = mousePoint
     selected = graph.findNode(mousePoint)
     if (selected){
-       dragStartBounds = selected.getBounds()
-       connectStartBounds = selected.getBounds()
+      isEdge = false
+      dragStartBounds = selected.getBounds()
+      connectStartBounds = selected.getBounds()
     } else {
       // Grab Edge if not a Node
+      isEdge = true
       selected = graph.findEdge(mousePoint)
     }
     repaint()
