@@ -87,4 +87,4 @@ function Graph(){
     }
 }
 
-module.exports = Graph 
+module.exports = Graph
