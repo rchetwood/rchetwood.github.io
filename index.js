@@ -1,6 +1,6 @@
 'use strict'
-const CircleNode = requires("./CircleNode")
-const LineEdge = requires("./LineEdge")
+const CircleNode = require("./CircleNode")
+// const LineEdge = require("./LineEdge")
 
 document.addEventListener('DOMContentLoaded', function () {
   const graph = new Graph()
