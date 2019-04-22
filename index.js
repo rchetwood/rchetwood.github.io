@@ -1,19 +1,27 @@
 'use strict'
-const CircleNode = require("./CircleNode")
-// const LineEdge = require("./LineEdge")
+
+function drawGrabber (x, y) {
+  const size = 5
+  const panel = document.getElementById('graphpanel')
+  const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
+  rect.setAttribute('x', x - size / 2)
+  rect.setAttribute('y', y - size / 2)
+  rect.setAttribute('width', size)
+  rect.setAttribute('height', size)
+  rect.setAttribute('fill', 'black')
+  panel.appendChild(rect)
+}
 
 document.addEventListener('DOMContentLoaded', function () {
-  const graph = new Graph()
-  const n1 = CircleNode(10, 10, 20, 'goldenrod')
-  const n2 = CircleNode(30, 30, 20, 'blue')
+  const graph = Graph()
+  const n1 = createCircleNode(10, 10, 20, 'goldenrod')
+  const n2 = createCircleNode(30, 30, 20, 'blue')
+  const e = createLineEdge()
   graph.add(n1)
   graph.add(n2)
+  graph.connect(e, { x: 20, y: 20 }, { x: 40, y: 40 })
   graph.draw()  
-  // const e = createLineEdge()
-  // graph.connect(e, { x: 20, y: 20 }, { x: 40, y: 40 })
-
-
-
+  
   function mouseLocation(event) {
     var rect = panel.getBoundingClientRect();
     return {
@@ -23,7 +31,6 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   
   let selected = undefined
-  
   function repaint() {
     panel.innerHTML = ''
     graph.draw()
