@@ -1,11 +1,10 @@
 'use strict'
 
 // Do we need these?
-const { CircleNode } = require('./CircleNode')
-const { DiamondNode } = require('./DiamondNode')
-const { LineEdge } = require('./LineEdge')
-
-const { Graph } = require('./Graph')
+// const { CircleNode } = require('./CircleNode')
+// const { DiamondNode } = require('./DiamondNode')
+// const { LineEdge } = require('./LineEdge')
+// const { Graph } = require('./Graph')
 
 /**
    A simple graph with round nodes and straight edges.

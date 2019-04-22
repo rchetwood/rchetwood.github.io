@@ -1,9 +1,6 @@
 'use strict'
 
-function CircleNode (color) {
-  let x, y
-  let size = 10
-  this.color = color
+function createCircleNode (x,y,size,color) {
     return {
       getConnectionPoint: (p) => {
         let cx = x + size/2
@@ -14,15 +11,15 @@ function CircleNode (color) {
         if (dist === 0) {
           return other
         } else {
-          return { x: cc + dx * (size / 2) / dist, y: cy + dy * (size / 2) / dist }
+          return { x: cx + dx * (size / 2) / dist, y: cy + dy * (size / 2) / dist }
         }
       },
       clone: () => {
-        let cloneCN = CircleNode()
+        let cloneCN = createCircleNode()
         cloneCN.x = x
         cloneCN.y = y
         cloneCN.size = size
-        cloneCN.color = this.color
+        cloneCN.color = color
         return cloneCN
       },
       getBounds: () => {
@@ -46,12 +43,12 @@ function CircleNode (color) {
         circle.setAttribute('cx', x + size / 2)
         circle.setAttribute('cy', y + size / 2)
         circle.setAttribute('r', size / 2)
-        circle.setAttribute('fill', this.color)
+        circle.setAttribute('fill', color)
         panel.appendChild(circle)
       }
     }
   }
 
   module.exports = {
-    CircleNode
+    createCircleNode
   }

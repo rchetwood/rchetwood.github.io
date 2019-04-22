@@ -1,7 +1,7 @@
 'use strict'
 
-const { GraphFrame } = require('./GraphFrame')
-const { SimpleGraph } = require('./SimpleGraph')
+// const { GraphFrame } = require('./GraphFrame')
+// const { SimpleGraph } = require('./SimpleGraph')
 
 /**
    A program for editing UML diagrams.

@@ -1,9 +1,6 @@
 'use strict'
 
-function DiamondNode (color) {
-  let x, y
-  let size = 10
-  this.color = color
+function createDiamondNode (x,y,size,color) {
   return {
     getConnectionPoint: (p) => {
       let cx = x + size/2
@@ -14,15 +11,15 @@ function DiamondNode (color) {
       if (dist === 0) {
         return other
       } else {
-        return { x: cc + dx * (size / 2) / dist, y: cy + dy * (size / 2) / dist }
+        return { x: cx + dx * (size / 2) / dist, y: cy + dy * (size / 2) / dist }
       }
     },
     clone: () => {
-      let cloneDN = DiamondNode()
+      let cloneDN = createDiamondNode()
       cloneDN.x = x
       cloneDN.y = y
       cloneDN.size = size
-      cloneDN.color = this.color
+      cloneDN.color = color
       return cloneDN
     },
     getBounds: () => {
@@ -49,12 +46,12 @@ function DiamondNode (color) {
                     (x) + "," + (y + size / 2))
       console.log("points: " + points); 
       diamond.setAttribute('points', points)
-      diamond.setAttribute('fill', this.color)
+      diamond.setAttribute('fill', color)
       panel.appendChild(diamond)
     }
   }
 }
 
 module.exports = {
-  DiamondNode
+  createDiamondNode
 }

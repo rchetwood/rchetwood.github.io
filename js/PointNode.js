@@ -1,7 +1,5 @@
 'use strict'
 
-const { Node } = require('./Node')
-
 /**
    An inivisible node that is used in the toolbar to draw an edge.
    Implements Node in Java
