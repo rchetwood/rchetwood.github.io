@@ -1,0 +1,19 @@
+LineEdge: 
+> Working
+
+LineStyle: 
+> Delete?
+
+PointNode: 
+> Updated
+
+SimpleGraph:
+> Updated
+
+SimpleGraphEditor: 
+> Updated
+> Copied parts from Graphed.js from lab17
+
+
+PropertySheet: 
+ToolBar: 
