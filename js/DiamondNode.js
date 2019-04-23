@@ -29,3 +29,5 @@ function createDiamondNode (x, y, size, color) {
     }
   }
 }
+
+module.exports = createDiamondNode;
