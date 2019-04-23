@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   panel.addEventListener('mousemove', event => {
     let mousePoint = mouseLocation(event)
-    if(dragStartBounds !== null) {
+    if(dragStartBounds !== null && edgeBtnPressed === undefined) {
       //dragging
       const bounds = selected.getBounds()
       selected.translate(
@@ -283,6 +283,26 @@ document.addEventListener('DOMContentLoaded', function () {
       graph.draw();
     }
 
+  })
+
+  let edgeBtnPressed = undefined
+  let edgeBtn = document.getElementById('edgeBtn')
+  edgeBtn.addEventListener('click', event =>{
+    // selected = undefined
+    console.log(" edgebtn pressed? " + edgeBtnPressed)
+
+    if(edgeBtn.style.fill == 'white'){
+      edgeBtn.style.fill = 'grey' 
+      circleNodeBtn.style.fill = 'white'   
+      edgeBtnPressed = true 
+      console.log(" edgebtn pressed? " + edgeBtnPressed)
+      // console.log("pressed? " + btnPressed)
+    }else{
+      edgeBtn.style.fill = 'white'
+      edgeBtnPressed = false
+      // console.log("pressed? " + btnPressed)
+    }
+    
   })
 
 })
