@@ -1,0 +1,24 @@
+LineEdge: 
+> Working
+
+LineStyle: 
+> Delete?
+
+PointNode: 
+> Updated
+
+SimpleGraph:
+> Updated
+
+SimpleGraphEditor: 
+> Updated
+> Copied parts from Graphed.js from lab17
+
+PropertySheet: 
+ToolBar: 
+
+==========
+Local files
+
+Graphed: (graphPanel.js in src)
+> Repaint instanceof LineEdge not working

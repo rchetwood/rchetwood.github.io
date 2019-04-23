@@ -1,27 +1,5 @@
-'use strict'
-
-function createDiamondNode (x,y,size,color) {
+function createDiamondNode (x, y, size, color) {
   return {
-    getConnectionPoint: (p) => {
-      let cx = x + size/2
-      let cy = y + size/2
-      let dx = p.x - cx
-      let dy = p.y - cy
-      let dist = Math.sqrt(dx**2 + dy**2)
-      if (dist === 0) {
-        return other
-      } else {
-        return { x: cx + dx * (size / 2) / dist, y: cy + dy * (size / 2) / dist }
-      }
-    },
-    clone: () => {
-      let cloneDN = createDiamondNode()
-      cloneDN.x = x
-      cloneDN.y = y
-      cloneDN.size = size
-      cloneDN.color = color
-      return cloneDN
-    },
     getBounds: () => {
       return {
         x: x,
@@ -52,6 +30,4 @@ function createDiamondNode (x,y,size,color) {
   }
 }
 
-module.exports = {
-  createDiamondNode
-}
+module.exports = createDiamondNode;
