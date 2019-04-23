@@ -1,5 +1,27 @@
-function createCircleNode (x, y, size, color) {
+'use strict'
+
+function createCircleNode (x,y,size,color) {
     return {
+      getConnectionPoint: (p) => {
+        let cx = x + size/2
+        let cy = y + size/2
+        let dx = p.x - cx
+        let dy = p.y - cy
+        let dist = Math.sqrt(dx**2 + dy**2)
+        if (dist === 0) {
+          return other
+        } else {
+          return { x: cx + dx * (size / 2) / dist, y: cy + dy * (size / 2) / dist }
+        }
+      },
+      clone: () => {
+        let cloneCN = createCircleNode()
+        cloneCN.x = x
+        cloneCN.y = y
+        cloneCN.size = size
+        cloneCN.color = color
+        return cloneCN
+      },
       getBounds: () => {
         return {
           x: x,

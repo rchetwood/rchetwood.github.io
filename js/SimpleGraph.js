@@ -1,18 +1,19 @@
 'use strict'
 
 // Do we need these?
-const { CircleNode } = require('./CircleNode')
-const { DiamondNode } = require('./DiamondNode')
-const { LineEdge } = require('./LineEdge')
-
-const { Graph } = require('./Graph')
+// const { CircleNode } = require('./CircleNode')
+// const { DiamondNode } = require('./DiamondNode')
+// const { LineEdge } = require('./LineEdge')
+// const { Graph } = require('./Graph')
 
 /**
    A simple graph with round nodes and straight edges.
-   Extends Graph
+   Extends Graph in Java
 */
 function SimpleGraph () {
   const sg = Graph()
+  nodes = sg.nodes
+  edges = sg.edges
   return {
     getNodePrototypes: () => {
       let nodeTypes = []
@@ -39,8 +40,8 @@ function SimpleGraph () {
     findEdge: (p) => {
       return sg.findEdge(p)
     },
-    draw: (g2) => {
-      return sg.draw(g2)
+    draw: () => {
+      return sg.draw()
     },
     removeNode: (n) => {
       return sg.removeNode(n)
@@ -48,15 +49,9 @@ function SimpleGraph () {
     removeEdge: (e) => {
       return sg.removeEdge(e)
     },
-    getBounds: (g2) => {
-      return sg.getBounds(g2)
+    getBounds: () => {
+      return sg.getBounds()
     },
-    getNodes: () => {
-      return sg.nodes
-    },
-    getEdges: () => {
-      return sg.nodes
-    }
   }
 }
 

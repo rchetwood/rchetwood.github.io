@@ -17,7 +17,10 @@ function GraphFrame(){
             // this.add(scrollPane, BorderLayout.CENTER);
         },
         openFile: () =>{
-
+            const openFile = document.getElementById('openFile');
+            openFile.addEventListener('click', function (event) {
+                alert('Select a file');
+              });
         },
         saveFile: () =>{
 
