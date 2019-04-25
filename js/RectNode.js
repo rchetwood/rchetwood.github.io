@@ -1,34 +1,41 @@
 'use strict'
 
-function createRectNode () {
-  let x, y, width, height, color
-  let text, methods, attributes
+function createRectNode (x, y) {
+  let color = 'white' // Default color
+  let width = 40 // Default width - temporary
+  let height = 30 // Default height - temporary
+  let text, methods, attributes // All strings
   let type // Class/Interface? Have this one file, or two separate?
   return {
     getConnectionPoint: (p) => {
-      let cx = x + size/2
-      let cy = y + size/2
+      let cx = x + width / 2
+      let cy = y + height / 2
       let dx = p.x - cx
       let dy = p.y - cy
-      if (dx<dy && dx>=-dy) {
+      if (dx < dy && dx >= -dy) {
         // South
-        return {x: x+size/2, y: y+size} }
-      if (dx>=dy && dx>=-dy) {
+        return { x: x + width / 2, y: y + height }
+      }
+      if (dx >= dy && dx >= -dy) {
         // East
-        return {x: x+size, y: y+size/2} }
-      if (dx<dy && dx<-dy) {
+        return { x: x + width, y: y + height / 2 }
+      }
+      if (dx < dy && dx < -dy) {
         // West
-        return {x: x, y: y+size/2} }
-      if (dx>=dy && dx<-dy) {
+        return { x: x, y: y + height / 2 }
+      }
+      if (dx >= dy && dx < -dy) {
         // North
-        return {x: x+size/2, y: y} }
-      return other;
+        return { x: x + width / 2, y: y }
+      }
+      return p
     },
     clone: () => {
-      let cloneCN = createCircleNode()
+      let cloneCN = createRectNode()
       cloneCN.x = x
       cloneCN.y = y
-      cloneCN.size = size
+      cloneCN.width = width
+      cloneCN.height = height
       cloneCN.color = color
       return cloneCN
     },
@@ -36,12 +43,12 @@ function createRectNode () {
       return {
         x: x,
         y: y,
-        width: size,
-        height: size
+        width: width,
+        height: height
       }
     },
     contains: p => {
-      return ((x + size / 2 - p.x) ** 2 + (y + size / 2 - p.y) ** 2 <= size ** 2 / 2)
+      return ((x + width / 2 - p.x) ** 2 + (y + height / 2 - p.y) ** 2 <= ((width + height) / 2) ** 2 / 2)
     },
     translate: (dx, dy) => {
       x += dx
@@ -49,12 +56,17 @@ function createRectNode () {
     },
     draw: () => {
       const panel = document.getElementById('graphpanel')
+      // if (text !== undefined){
+      //   const textBox = document.createElementNS('http://www.w3.org/2000/svg', 'text')
+      //   // TODO
+      // }
       const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
       rect.setAttribute('x', x)
       rect.setAttribute('y', y)
       rect.setAttribute('width', width)
       rect.setAttribute('height', height)
       rect.setAttribute('fill', color)
+      rect.setAttribute('stroke', 'black')
       panel.appendChild(rect)
     }
   }
