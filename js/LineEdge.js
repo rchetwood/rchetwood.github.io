@@ -89,6 +89,8 @@ function createLineEdge () {
           line.setAttribute('stroke-dasharray', 0)
       }
       // LINE POINTER TYPES: NONE, DIAMOND, OPEN, CLOSE
+      // TODO - pointer disappears if one HV/VH Edge is missing
+      // Example: if HV Edge is moved to only be horizontal
       let tS, cptS, bptS, rptS, lptS
       if (startArrow !== 'NONE') {
         if (type !== 'LINE') {
@@ -194,6 +196,7 @@ function createLineEdge () {
       return cloneLE
     },
     contains: function(aPoint) {
+      // For Line; need to add for HV and VH
       const MAX_DIST = 2
       return ptSegDist(this.getConnectionPoints(), aPoint) < MAX_DIST
     },
