@@ -49,4 +49,4 @@ function createCircleNode (x,y,size,color) {
     }
   }
 
-  module.exports = createCircleNode;
+  module.exports = { createCircleNode }

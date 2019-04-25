@@ -1,5 +1,34 @@
+'use strict'
+
 function createDiamondNode (x, y, size, color) {
   return {
+    getConnectionPoint: (p) => {
+      let cx = x + size/2
+      let cy = y + size/2
+      let dx = p.x - cx
+      let dy = p.y - cy
+      if (dx<dy && dx>=-dy) {
+        // South
+        return {x: x+size/2, y: y+size} }
+      if (dx>=dy && dx>=-dy) {
+        // East
+        return {x: x+size, y: y+size/2} }
+      if (dx<dy && dx<-dy) {
+        // West
+        return {x: x, y: y+size/2} }
+      if (dx>=dy && dx<-dy) {
+        // North
+        return {x: x+size/2, y: y} }
+      return other;
+    },
+    clone: () => {
+      let cloneCN = createCircleNode()
+      cloneCN.x = x
+      cloneCN.y = y
+      cloneCN.size = size
+      cloneCN.color = color
+      return cloneCN
+    },
     getBounds: () => {
       return {
         x: x,
@@ -30,4 +59,4 @@ function createDiamondNode (x, y, size, color) {
   }
 }
 
-module.exports = createDiamondNode;
+module.exports = { createDiamondNode} 
