@@ -45,15 +45,16 @@ function ptSegDist (ps, p) {
 function createLineEdge () {
   let start, end
   let stroke = 'DOTTED' // SOLID, DOTTED
-  let type = 'LINE' // LINE, HVEDGE, VHEDGE
+  let type = 'HVEDGE' // LINE, HVEDGE, VHEDGE
   let startArrow = 'DIAMOND' // NONE, DIAMOND, OPEN, CLOSE
   let endArrow = 'DIAMOND' // NONE, DIAMOND, OPEN, CLOSE
+  let bend
   return {
     draw: function()  {
       const ps = this.getConnectionPoints()
       const panel = document.getElementById('graphpanel')
       // LINE EDGE TYPE: LINE, HVEDGE, VHEDGE
-      let line, bend, sa, ea
+      let line, sa, ea
       switch (type) {
         case 'HVEDGE':
           line = document.createElementNS('http://www.w3.org/2000/svg', 'polyline')
@@ -89,11 +90,12 @@ function createLineEdge () {
           line.setAttribute('stroke-dasharray', 0)
       }
       // LINE POINTER TYPES: NONE, DIAMOND, OPEN, CLOSE
-      // TODO - pointer disappears if one HV/VH Edge is missing
-      // Example: if HV Edge is moved to only be horizontal
       let tS, cptS, bptS, rptS, lptS
       if (startArrow !== 'NONE') {
         if (type !== 'LINE') {
+          if (ps.start.x === bend.x && ps.start.y === bend.y) {
+            bend = ps.end
+          }
           tS = 5 / lineDist(ps.start, bend)
           cptS = linePoint(ps.start, bend, tS)
         } else {
@@ -107,6 +109,9 @@ function createLineEdge () {
       let tE, cptE, bptE, rptE, lptE
       if (endArrow !== 'NONE') {
         if (type !== 'LINE') {
+          if (ps.end.x === bend.x && ps.end.y === bend.y) {
+            bend = ps.start
+          }
           tE = 5 / lineDist(ps.end, bend)
           cptE = linePoint(ps.end, bend, tE)
         } else {
@@ -198,7 +203,12 @@ function createLineEdge () {
     contains: function(aPoint) {
       // For Line; need to add for HV and VH
       const MAX_DIST = 2
-      return ptSegDist(this.getConnectionPoints(), aPoint) < MAX_DIST
+      let cps = this.getConnectionPoints()
+      if (bend !== undefined){
+        return (ptSegDist({start: cps.start, end: bend}, aPoint) < MAX_DIST
+        || ptSegDist({start: bend, end: cps.end}, aPoint) < MAX_DIST)
+      }
+      return ptSegDist(cps, aPoint) < MAX_DIST
     },
     getBounds: function() {
       const ps = this.getConnectionPoints()
