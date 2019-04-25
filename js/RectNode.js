@@ -4,7 +4,7 @@ function createRectNode (x, y) {
   let color = 'white' // Default color
   let width = 40 // Default width - temporary
   let height = 30 // Default height - temporary
-  let text, methods, attributes // All strings
+  let text, methods, attributes // These may be strings
   let type // Class/Interface? Have this one file, or two separate?
   return {
     getConnectionPoint: (p) => {
@@ -56,10 +56,11 @@ function createRectNode (x, y) {
     },
     draw: () => {
       const panel = document.getElementById('graphpanel')
-      // if (text !== undefined){
-      //   const textBox = document.createElementNS('http://www.w3.org/2000/svg', 'text')
-      //   // TODO
-      // }
+      if (text !== undefined){
+        const textBox = document.createElementNS('http://www.w3.org/2000/svg', 'text')
+        // TODO - how to add written text?
+      }
+      // Find dimensions of text to determine bounding rectangle size
       const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
       rect.setAttribute('x', x)
       rect.setAttribute('y', y)

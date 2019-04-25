@@ -14,8 +14,8 @@ function drawGrabber (x, y) {
 
 document.addEventListener('DOMContentLoaded', function () {
   const graph = Graph()
-  const n1 = createCircleNode(10, 10, 20, 'goldenrod')
-  const n2 = createCircleNode(30, 30, 20, 'blue')
+  const n1 = createDiamondNode(10, 10, 20, 'goldenrod')
+  const n2 = createRectNode(30, 30)
   const e = createLineEdge()
   graph.add(n1)
   graph.add(n2)
