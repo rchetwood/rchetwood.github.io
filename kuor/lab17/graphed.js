@@ -11,7 +11,7 @@ function drawGrabber (x, y) {
   rect.setAttribute('fill', 'black')
   panel.appendChild(rect)
 }
-
+  
 document.addEventListener('DOMContentLoaded', function () {
   const graph = Graph()
   const n1 = createCircleNode(10, 10, 20, 'goldenrod')
