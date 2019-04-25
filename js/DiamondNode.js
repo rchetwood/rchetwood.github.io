@@ -19,7 +19,7 @@ function createDiamondNode (x, y, size, color) {
       if (dx>=dy && dx<-dy) {
         // North
         return {x: x+size/2, y: y} }
-      return other;
+      return p;
     },
     clone: () => {
       let cloneCN = createCircleNode()
