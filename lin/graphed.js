@@ -117,7 +117,7 @@ function createLineEdge() {
         // repaint()
       })
     
-      // const p = center(start.getBounds())
+      const p = center(start.getBounds())
       const x1 = p.x
       const y1 = p.y
       line.setAttribute('x1',x1.toString())
@@ -126,15 +126,16 @@ function createLineEdge() {
       // Not the "connection points" that graphed2 uses
       panel.addEventListener('mouseup', event => {
         let mousePoint = mouseLocation(event)
-        // dragStartPoint = undefined
-        // dragStartBounds = undefined
-        // repaint()
-        // edgeEndPoint = mousePoint
+        dragStartPoint = undefined
+        dragStartBounds = undefined
+        repaint()
+        edgeEndPoint = mousePoint
         selected = graph.findNode(mousePoint)
         if (selected){
            q = selected.getBounds()}
       })
-      // const q = center(end.getBounds()) 
+      
+      const q = center(end.getBounds()) 
       const x2 = q.x
       const y2 = q.y
       line.setAttribute('x2',x2.toString())
@@ -145,19 +146,9 @@ function createLineEdge() {
   }
 }
 
-function doRectClick(){
-  let circleNodeBtn = document.getElementById('circleNodeBtn')
-  let edgeBtn = document.getElementById('edgeBtn')
-  if( circleNodeBtn.style.fill == 'white')
-  {
-    circleNodeBtn.style.fill = 'grey'
-  }
-  else{
-    circleNodeBtn.style.fill = 'white'
-  }
 
-}
-
+let downx
+let downy, upx, upy
 document.addEventListener('DOMContentLoaded', function () {
   const graph = new Graph()
   const n1 = createCircleNode(10, 10, 20, 'goldenrod')
@@ -167,6 +158,7 @@ document.addEventListener('DOMContentLoaded', function () {
   graph.draw()  
   // const e = createLineEdge()
   // graph.connect(e, { x: 20, y: 20 }, { x: 40, y: 40 })
+
 
 
 
@@ -196,20 +188,27 @@ document.addEventListener('DOMContentLoaded', function () {
   let dragStartBounds = undefined
   let connectStartBounds = undefined
   let connectEndBounds = undefined
+ 
   const panel = document.getElementById('graphpanel')
   panel.addEventListener('mousedown', event => {
     let mousePoint = mouseLocation(event)
     dragStartPoint = mousePoint
     selected = graph.findNode(mousePoint)
+    console.log('selected  ' + selected)
+ 
     if (selected){
        dragStartBounds = selected.getBounds()
-       connectStartBounds = selected.getBounds()}
+       connectStartBounds = selected.getBounds()
+       downx = connectStartBounds.x;
+       downy = connectStartBounds.y;
+      }
+ 
     repaint()
   })
 
   panel.addEventListener('mousemove', event => {
     let mousePoint = mouseLocation(event)
-    if(dragStartBounds !== null && edgeBtnPressed === undefined) {
+    if(dragStartBounds !== null && (edgeBtnPressed === undefined || edgeBtnPressed === false)) {
       //dragging
       const bounds = selected.getBounds()
       selected.translate(
@@ -232,20 +231,26 @@ document.addEventListener('DOMContentLoaded', function () {
   panel.addEventListener('mouseup', event => {
     let mousePoint = mouseLocation(event)
     selected = graph.findNode(mousePoint)
+  
     if (selected){
-      connectEndBounds =selected.getBounds()}
+      connectEndBounds =selected.getBounds()
+      upx = connectEndBounds.x;
+      upy = connectEndBounds.y;}
     dragStartPoint = undefined
     dragStartBounds = undefined
+
+    if(edgeBtnPressed){
+      let e = createLineEdge()
+      console.log('downx   ' + downx)
+      console.log('downy   ' + downy)
+      console.log('upx   ' + upx)
+      console.log('upy   ' + upy)
+      // graph.connect(e, {x: downx, y: downy} , {x: upx, y: upy})
+      // graph.draw()
+    }
     repaint()
   })
 
-  // panel.addEventListener('click', event => {
-  //   // let circleNodeBtn = document.getElementById('circleNodeBtn')
-  //   let location = mouseLocation(event)
-  //   let n = createCircleNode(location.x, location.y, 20, 'green')
-  //   graph.add(n)
-  //   graph.draw();
-  // })
 
   function within(element, pointx, pointy){
     if(pointx >= element.x && pointx <= element.x + element.width
@@ -258,14 +263,17 @@ document.addEventListener('DOMContentLoaded', function () {
   //code for cloning!
   let btnPressed = undefined
   let circleNodeBtn = document.getElementById('circleNodeBtn')
-  let edgeBtn = document.getElementById('edgeBtn')
+  console.log("pressed? " + btnPressed)
   circleNodeBtn.addEventListener('click', event =>{
 
     console.log("pressed? " + btnPressed)
 
+    //click on the button
     if(circleNodeBtn.style.fill == 'white'){
       circleNodeBtn.style.fill = 'grey'    
+      edgeBtn.style.fill='white'
       btnPressed = true
+      edgeBtnPressed = false
       console.log("pressed? " + btnPressed)
     }else{
       circleNodeBtn.style.fill = 'white'
@@ -277,8 +285,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
   panel.addEventListener('click', event => {
     let location = mouseLocation(event)
-    let n = createCircleNode(location.x, location.y, 20, 'green')
-    if(btnPressed){
+
+    if(btnPressed &&(edgeBtnPressed === undefined || edgeBtnPressed === false)){
+      let n = createCircleNode(location.x, location.y, 20, 'green')
       graph.add(n)
       graph.draw();
     }
@@ -300,6 +309,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }else{
       edgeBtn.style.fill = 'white'
       edgeBtnPressed = false
+      
       // console.log("pressed? " + btnPressed)
     }
     

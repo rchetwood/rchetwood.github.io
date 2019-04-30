@@ -1,3 +1,10 @@
 #graphpanel {
     border: solid black thin;
+    height: 250px;
+    width: 500px
+}
+#editor {
+    border: solid black thin;
+    height: 100px;
+    width: 500px
 }

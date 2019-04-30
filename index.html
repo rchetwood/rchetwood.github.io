@@ -1,55 +1,31 @@
 <html xmlns='http://www.w3.org/1999/xhtml'>
-  <head>
-    <meta http-equiv='content-type' content='text/html; charset=UTF-8'/> 
-    <title>Graph Editor</title> 
-    <link href='index.css' rel='stylesheet' type='text/css'/> 
-    <script src='index.js' type='text/javascript'></script> 
-    <script src='js/Graph.js' type='text/javascript'></script> 
-    <script src='js/CircleNode.js' type='text/javascript'></script> 
-    <script src='js/LineEdge.js' type='text/javascript'></script> 
-    </head>   
-  <body>
-    <div>
-      <svg  xmlns='http://www.w3.org/2000/svg'>
-        <rect  x="0" y="0" width="40" height="40" style="fill:white;stroke-width:1;stroke:rgb(0,0,0)" id="circleNodeBtn" />
-        <rect  x="0" y="50" width="40" height="40" style="fill:white;stroke-width:1;stroke:rgb(0,0,0)" id="edgeBtn" />
-        </svg> 
-      <svg id='graphpanel' xmlns='http://www.w3.org/2000/svg'></svg>
-    </div>
-    <!-- <script>
-      let circleNodeBtn = document.getElementById('circleNodeBtn')
-      let edgeBtn = document.getElementById('edgeBtn')
-     
-      circleNodeBtn.addEventListener('click', event =>{
-          if( circleNodeBtn.style.fill == 'white'){
-            circleNodeBtn.style.fill = 'grey'
-            panel.addEventListener('click', event => {
-              let location = mouseLocation(event)
-              let n = createCircleNode(location.x, location.y, 20, 'green')
-              graph.add(n)
-              graph.draw();
-              })
-          }else{
-          circleNodeBtn.style.fill = 'white'}
-        
 
+<head>
+  <meta http-equiv='content-type' content='text/html; charset=UTF-8' />
+  <title>Graph Editor</title>
+  <link href='index.css' rel='stylesheet' type='text/css' />
+  <script src='index.js' type='text/javascript'></script>
+  <script src='./framework/Graph.js' type='text/javascript'></script>
+  <script src='./nodes/CircleNode.js' type='text/javascript'></script>
+  <script src='./nodes/LineEdge.js' type='text/javascript'></script>
+  <script src='./nodes/ClassNode.js' type='text/javascript'></script>
+  <script src='./nodes/DiamondNode.js' type='text/javascript'></script>
+  <script src='./nodes/RectNode.js' type='text/javascript'></script>
+  <script src='./nodes/InterfaceNode.js' type='text/javascript'></script>
+  <script src='./framework/FormLayout.js' type='text/javascript'></script>
+  <script src='./framework/PropertySheet.js' type='text/javascript'></script>
+  <script src='./framework/ToolBar.js' type='text/javascript'></script>
+  <script src='./framework/node-types.js' type='text/javascript'></script>
+</head>
 
-        panel.addEventListener('mouseup', event =>{})
-      })
+<body>
+  <div id='toolbar'></div>
+  <div>
+    <svg id='graphpanel' xmlns='http://www.w3.org/2000/svg'></svg>
+  </div>
+  <div>
+    <svg id='editor' xmlns='http://www.w3.org/2000/svg'></svg>
+  </div>
+</body>
 
-      edgeBtn.addEventListener('click', event =>{
-           if( edgeBtn.style.fill == 'white'){
-            edgeBtn.style.fill = 'grey'}
-            else{
-              edgeBtn.style.fill = 'white'}
-          panel.addEventListener('click', event => {
-            // let circleNodeBtn = document.getElementById('circleNodeBtn')
-            let location = mouseLocation(event)
-            let e = LineEdge()
-            graph.connect(e, n1,n2)
-          })
-        })
-      
-    </script> -->
-  </body>
 </html>

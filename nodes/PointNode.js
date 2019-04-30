@@ -4,10 +4,7 @@
    An inivisible node that is used in the toolbar to draw an edge.
    Implements Node in Java
 */
-function PointNode () {
-  // Constructs a point node with coordinates (0, 0)
-  let x = 0
-  let y = 0
+function PointNode (x, y) {
   return {
     draw: () => {
       return undefined
@@ -25,15 +22,8 @@ function PointNode () {
     getConnectionPoint: (other) => {
       return {x: x, y: y}
     },
-    clone: () => {
-      let clonePN = PointNode()
-      clonePN.x = x
-      clonePN.y = y
-      return clonePN
+    clone: (x, y) => {
+      return PointNode(x, y)
     }
   }
-}
-
-module.exports = {
-  PointNode
 }

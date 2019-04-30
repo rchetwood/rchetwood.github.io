@@ -44,12 +44,39 @@ function ptSegDist (ps, p) {
 
 function createLineEdge () {
   let start, end
-  let stroke = 'DOTTED' // SOLID, DOTTED
-  let type = 'HVEDGE' // LINE, HVEDGE, VHEDGE
-  let startArrow = 'DIAMOND' // NONE, DIAMOND, OPEN, CLOSE
-  let endArrow = 'DIAMOND' // NONE, DIAMOND, OPEN, CLOSE
+  let stroke = 'SOLID' // SOLID, DOTTED
+  let type = 'LINE' // LINE, HVEDGE, VHEDGE
+  let startArrow = 'NONE' // NONE, DIAMOND, OPEN, CLOSE
+  let endArrow = 'NONE' // NONE, DIAMOND, OPEN, CLOSE
   let bend
   return {
+    getProps: () => {
+      return ['Type', 'Stroke', 'StartArrow', 'EndArrow']
+    },
+    getStroke: (t) => {
+      return stroke
+    },
+    getType: (t) => {
+      return type
+    },
+    getStartArrow: (t) => {
+      return startArrow
+    },
+    getEndArrow: (t) => {
+      return endArrow
+    },
+    setStroke: (t) => {
+      stroke = t.toUpperCase()
+    },
+    setType: (t) => {
+      type = t.toUpperCase()
+    },
+    setStart: (t) => {
+      startArrow = t.toUpperCase()
+    },
+    setEnd: (t) => {
+      endArrow = t.toUpperCase()
+    },
     draw: function()  {
       const ps = this.getConnectionPoints()
       const panel = document.getElementById('graphpanel')
@@ -194,10 +221,10 @@ function createLineEdge () {
       start = s
       end = e
     },
-    clone: () => {
+    clone: (start, end) => {
+      // Pass two PointNodes as Start and End
       let cloneLE = createLineEdge()
-      cloneLE.start = start
-      cloneLE.end = end
+      cloneLE.connect(start, end)
       return cloneLE
     },
     contains: function(aPoint) {
@@ -239,8 +266,4 @@ function createLineEdge () {
       return { start: start.getConnectionPoint(eC), end: end.getConnectionPoint(sC) }
     }
   }
-}
-
-module.exports = {
-  createLineEdge
 }

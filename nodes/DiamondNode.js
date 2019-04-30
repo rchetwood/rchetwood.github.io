@@ -1,8 +1,28 @@
-function createDiamondNode(x, y, size, color, scene) {
-    const properties = {
-        name:NodeType.DIAMOND
-    }
+function createDiamondNode(x, y) {
     return {
+        getNodeType: () => {
+            return {
+                name: NodeType.DIAMOND
+            }
+        },
+        getProps: () => {
+            return ['Color', 'Size']
+        },
+        getSize: () => {
+            return size
+        },
+        getColor: () => {
+            return color
+        },
+        setSize: (newSize) => {
+            this.size = newSize
+        },
+        setColor: (newColor) => {
+            this.color = newColor
+        },
+        setPanel: (newPanel) => {
+            this.panel = newPanel
+        },
         getBounds: () => {
             return {
                 x: x,
@@ -19,7 +39,6 @@ function createDiamondNode(x, y, size, color, scene) {
             y += dy
         },
         draw: () => {
-            const panel = document.getElementById(scene)
             const diamond = document.createElementNS('http://www.w3.org/2000/svg', 'polygon')
             let points = ((x + size / 2) + "," + (y) + " " +
                 (x + size) + "," + (y + size / 2) + " " +
@@ -27,7 +46,7 @@ function createDiamondNode(x, y, size, color, scene) {
                 (x) + "," + (y + size / 2))
             diamond.setAttribute('points', points)
             diamond.setAttribute('fill', color)
-            panel.appendChild(diamond)
+            panel.append(diamond)
         }
     }
 }

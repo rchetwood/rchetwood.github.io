@@ -1,9 +1,31 @@
-function createCircleNode(x, y, size, color, scene) {
+function createCircleNode(x, y) {
+    // const defaultSize = 20
+    // const defaultColor = 'white'
+    // let size = defaultSize
+    // let color = defaultColor
     return {
-        getProperties: () => {
+        getProps: () => {
+            return ['Color', 'Size']
+        },
+        getSize: () => {
+            return size
+        },
+        getColor: () => {
+            return color
+        },
+        getNodeType: () => {
             return {
                 name: NodeType.CIRCLE,
             }
+        },
+        setSize: (newSize) => {
+            this.size = newSize
+        },
+        setColor: (newColor) => {
+            this.color = newColor
+        },
+        setPanel: (newPanel) => {
+            this.panel = newPanel
         },
         getConnectionPoint: (p) => {
             let cx = x + size / 2
@@ -41,13 +63,12 @@ function createCircleNode(x, y, size, color, scene) {
             y += dy
         },
         draw: () => {
-            const panel = document.getElementById(scene)
             const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
             circle.setAttribute('cx', x + size / 2)
             circle.setAttribute('cy', y + size / 2)
             circle.setAttribute('r', size / 2)
             circle.setAttribute('fill', color)
-            panel.appendChild(circle)
+            panel.append(circle)
         }
     }
 }

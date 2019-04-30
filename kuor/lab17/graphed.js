@@ -14,13 +14,20 @@ function drawGrabber (x, y) {
   
 document.addEventListener('DOMContentLoaded', function () {
   const graph = Graph()
-  const n1 = createDiamondNode(10, 10, 20, 'goldenrod')
+  const n1 = createDiamondNode(10, 10)
   const n2 = createRectNode(30, 30)
+  n2.setName('test class')
+  n2.setMethods('method1()')
+  n2.setAttributes('attribute')
   const e = createLineEdge()
   graph.add(n1)
   graph.add(n2)
   graph.connect(e, { x: 20, y: 20 }, { x: 40, y: 40 })
   graph.draw()
+
+  const p = PropertySheet(5, 5)
+  //p.getProperties(e)
+  p.draw()
 
   function mouseLocation (event) {
     var rect = panel.getBoundingClientRect()
@@ -32,7 +39,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function repaint () {
     panel.innerHTML = ''
+    editor.innerHTML= ''
     graph.draw()
+    p.draw()
     if (selected) {
       if (isEdge) {
         const cps = selected.getConnectionPoints()
@@ -54,7 +63,6 @@ document.addEventListener('DOMContentLoaded', function () {
   let selected
   let dragStartPoint
   let dragStartBounds
-
   const panel = document.getElementById('graphpanel')
   panel.addEventListener('mousedown', event => {
     let mousePoint = mouseLocation(event)
@@ -62,10 +70,12 @@ document.addEventListener('DOMContentLoaded', function () {
     selected = graph.findNode(mousePoint)
     if (selected) {
       isEdge = false
+      p.getProperties(selected)
       dragStartBounds = selected.getBounds()
     } else {
       isEdge = true
       selected = graph.findEdge(mousePoint)
+      p.getProperties(selected)
     }
     repaint()
   })
@@ -89,4 +99,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     repaint()
   })
+
+  const editor = document.getElementById('editor')
+  // Add editor listeners here
 })
