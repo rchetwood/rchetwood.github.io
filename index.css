@@ -1,17 +1,14 @@
-#graphpanel {
-    border: solid black thin;
-    width: 800;
-    height: 550;
-}
-#editor {
-    border: solid black thin;
-    height: 100px;
-    width: 500px
+#toolbar {
+    height: 50px; 
 }
 
-#toolbar {
+#graphpanel {
+    position: relative;
     border: solid black thin;
-    height: 32px; 
-    width: 255px;
-    /* //height: 30; */
+    width: 500;
+    height: 300;
+}
+
+#editor{
+    position: relative;
 }

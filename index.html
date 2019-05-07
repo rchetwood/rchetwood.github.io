@@ -5,27 +5,36 @@
   <title>Graph Editor</title>
   <link href='index.css' rel='stylesheet' type='text/css' />
   <script src='index.js' type='text/javascript'></script>
-  <script src='./framework/Graph.js' type='text/javascript'></script>
+  <script src='./nodes/PointNode.js' type='text/javascript'></script>
   <script src='./nodes/CircleNode.js' type='text/javascript'></script>
-  <script src='./nodes/LineEdge.js' type='text/javascript'></script>
-  <script src='./nodes/ClassNode.js' type='text/javascript'></script>
   <script src='./nodes/DiamondNode.js' type='text/javascript'></script>
+  <script src='./nodes/ImageNode.js' type='text/javascript'></script>
   <script src='./nodes/RectNode.js' type='text/javascript'></script>
+  <script src='./nodes/ClassNode.js' type='text/javascript'></script>
   <script src='./nodes/InterfaceNode.js' type='text/javascript'></script>
-  <script src='./framework/FormLayout.js' type='text/javascript'></script>
-  <script src='./framework/PropertySheet.js' type='text/javascript'></script>
+  <script src='./nodes/NoteNode.js' type='text/javascript'></script>
+  <script src='./edges/LineEdge.js' type='text/javascript'></script>
+  <script src='./edges/HVEdge.js' type='text/javascript'></script>
+  <script src='./edges/VHEdge.js' type='text/javascript'></script>
+  <script src='./edges/AggregateEdge.js' type='text/javascript'></script>
+  <script src='./edges/DependEdge.js' type='text/javascript'></script>
+  <script src='./edges/InheritEdge.js' type='text/javascript'></script>
+  <script src='./edges/InterfaceEdge.js' type='text/javascript'></script>
   <script src='./framework/ToolBar.js' type='text/javascript'></script>
-  <script src='./framework/node-types.js' type='text/javascript'></script>
+  <script src='./framework/Graph.js' type='text/javascript'></script>
+  <script src='./framework/PropertySheet.js' type='text/javascript'></script>
+  <script src='./framework/FormLayout.js' type='text/javascript'></script>  
+  <script src='./framework/Grabber.js' type='text/javascript'></script>
+  <script src='./framework/NodeTypes.js' type='text/javascript'></script>
 </head>
 
 <body>
+  <div id='navbar'></div>
   <div id='toolbar'></div>
   <div>
-    <svg id='graphpanel' xmlns='http://www.w3.org/2000/svg'></svg>
+    <svg id='graphpanel' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink'></svg>
   </div>
-  <div>
-    <svg id='editor' xmlns='http://www.w3.org/2000/svg'></svg>
-  </div>
+  <div id='editor'></div>
 </body>
 
 </html>
