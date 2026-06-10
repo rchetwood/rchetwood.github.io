@@ -195,7 +195,12 @@ const API = "https://api.todoist.com/api/v1";
 const FIB = [1,2,3,5,8,13];
 const LEAD = {1:1, 2:2, 3:4, 5:7, 8:14, 13:28};          // effort -> start-by lead, days
 const SHAPES = ["standard","deadline","perishable","compounding"];
-const MECH_LABELS = new Set(["fastpull","perishable","compounding","blocked"]);
+const LABEL_GROUPS = [            // row name -> label prefix; labels outside these groups are untouched
+  ["Bet",   /^bet[-_]/i],
+  ["Area",  /^area[-_]/i],
+  ["Who",   /^who[-_]/i],
+  ["Where", /^where[-_]/i],
+];
 const SCORE_RE = /^v(\d{1,2})\s*·\s*e(\d{1,2})\s*·\s*f(\d{1,2})\s*·\s*(standard|deadline|perishable|compounding)\s*·\s*s:(\d{4}-\d{2}-\d{2})\s*$/m;
 
 const $ = id => document.getElementById(id);
@@ -248,7 +253,6 @@ function fmtShort(iso){
   return new Date(y,m-1,d).toLocaleDateString(undefined,{month:"short",day:"numeric"});
 }
 function setStatus(msg, isErr){ const s=$("status"); s.textContent=msg||""; s.className=isErr?"err":""; }
-function isBetLabel(name){ return /^bet[-_]/i.test(name); }
 
 /* ---------- connect / load ---------- */
 $("connect").addEventListener("click", connect);
@@ -404,16 +408,15 @@ function card(t){
   });
   startInput.addEventListener("change", ()=>{ sel.startBy = startInput.value; sel.startByTouched = true; sync(); });
 
-  // labels: bets then areas
-  const betNames  = state.labels.map(l=>l.name).filter(isBetLabel);
-  const areaNames = state.labels.map(l=>l.name).filter(n=>!isBetLabel(n) && !MECH_LABELS.has(n.toLowerCase()));
-  const mkTagRow = (labelText, names) => {
+  // labels, grouped by prefix convention: bet-* / area-* / who-* / where-*
+  const mkTagRow = (labelText, names, rx) => {
     if(!names.length) return null;
     const row=document.createElement("div"); row.className="dimrow";
     const lab=document.createElement("div"); lab.className="dim-label"; lab.textContent=labelText; row.appendChild(lab);
     const chips=document.createElement("div"); chips.className="chips"; row.appendChild(chips);
     for(const n of names){
-      const b=document.createElement("button"); b.type="button"; b.className="tagchip"; b.textContent="@"+n;
+      const b=document.createElement("button"); b.type="button"; b.className="tagchip";
+      b.textContent=n.replace(rx,""); b.title="@"+n;
       b.setAttribute("aria-pressed", String(sel.labels.has(n)));
       b.addEventListener("click", ()=>{
         sel.labels.has(n) ? sel.labels.delete(n) : sel.labels.add(n);
@@ -423,8 +426,11 @@ function card(t){
     }
     return row;
   };
-  const betsRow = mkTagRow("Bet", betNames);  if(betsRow)  body.appendChild(betsRow);
-  const areaRow = mkTagRow("Area", areaNames); if(areaRow) body.appendChild(areaRow);
+  for(const [groupName, rx] of LABEL_GROUPS){
+    const names = state.labels.map(l=>l.name).filter(n=>rx.test(n)).sort();
+    const row = mkTagRow(groupName, names, rx);
+    if(row) body.appendChild(row);
+  }
 
   // ledger (live score-line preview)
   const ledger=document.createElement("div"); ledger.className="ledger";
