@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JIT Intake Console</title>
+<style>
+  :root{
+    --paper:#ECF1F2; --card:#FFFFFF; --ink:#15303A; --ink-soft:#5C737C;
+    --line:#CBD8DC; --act:#0E7490; --act-deep:#0B5B72; --act-tint:#E3F0F3;
+    --warn:#B45309; --warn-bg:#FDF3E3; --hot:#C2410C; --ok:#2F7D5C;
+    --mono:ui-monospace,"SF Mono","Cascadia Code",Menlo,Consolas,monospace;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{background:var(--paper)}
+  body{margin:0;font-family:var(--sans);color:var(--ink);font-size:15px;line-height:1.45;
+       background:
+         linear-gradient(transparent 31px, rgba(14,116,144,.045) 32px) 0 0/100% 32px,
+         var(--paper);}
+  a{color:var(--act)}
+  .wrap{max-width:680px;margin:0 auto;padding:20px 16px 80px}
+
+  header.bar{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+  .wordmark{font-family:var(--mono);font-size:18px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+  .wordmark .dim{color:var(--ink-soft);font-weight:400}
+  .queue-count{font-family:var(--mono);font-size:13px;color:var(--ink-soft)}
+  .spacer{flex:1}
+  #timer{font-family:var(--mono);font-size:13px;border:1px solid var(--line);background:var(--card);
+         border-radius:6px;padding:5px 10px;cursor:pointer;color:var(--ink)}
+  #timer.running{border-color:var(--act);color:var(--act-deep)}
+  #timer.over{border-color:var(--hot);color:var(--hot)}
+  .tagline{color:var(--ink-soft);font-size:13px;margin:0 0 18px}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:14px}
+  .panel h2{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 10px;font-weight:600}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+  .row:last-child{margin-bottom:0}
+  label.fld{font-size:12px;color:var(--ink-soft);display:block;margin-bottom:3px}
+  input[type=password],input[type=text],input[type=date],select{
+    font:inherit;color:var(--ink);background:#FBFDFD;border:1px solid var(--line);
+    border-radius:6px;padding:7px 9px;min-width:0}
+  input:focus,select:focus,button:focus-visible{outline:2px solid var(--act);outline-offset:2px}
+  input[type=date]{font-family:var(--mono);font-size:13px}
+  .grow{flex:1 1 220px}
+  .check{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-soft)}
+  .hint{font-size:12px;color:var(--ink-soft);margin-top:8px}
+  .hint.warn{color:var(--warn)}
+
+  button{font:inherit;cursor:pointer;border-radius:7px;border:1px solid var(--line);background:var(--card);
+         color:var(--ink);padding:8px 14px}
+  button.primary{background:var(--act);border-color:var(--act);color:#fff;font-weight:600}
+  button.primary:hover{background:var(--act-deep)}
+  button.quiet{color:var(--ink-soft)}
+  button:disabled{opacity:.45;cursor:default}
+
+  #status{font-family:var(--mono);font-size:12px;color:var(--ink-soft);min-height:18px;margin:4px 2px 14px;white-space:pre-wrap}
+  #status.err{color:var(--hot)}
+
+  /* ---------- task card ---------- */
+  .task{background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:16px;overflow:hidden}
+  .task .body{padding:16px}
+  .task input.title{width:100%;font-size:16px;font-weight:600;border:none;border-bottom:1px dashed var(--line);
+                    border-radius:0;background:transparent;padding:2px 0 7px}
+  .orig-desc{font-size:12.5px;color:var(--ink-soft);margin:8px 0 0;white-space:pre-wrap;
+             border-left:2px solid var(--line);padding-left:8px;max-height:72px;overflow:auto}
+
+  .dim-label{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-soft);
+             width:96px;flex:none;font-weight:600;padding-top:6px}
+  .dimrow{display:flex;align-items:flex-start;gap:8px;margin-top:13px}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{font-family:var(--mono);font-size:13px;border:1px solid var(--line);background:#FBFDFD;
+        border-radius:6px;padding:5px 0;width:38px;text-align:center}
+  .chip[aria-pressed="true"]{border-color:transparent;color:#fff;font-weight:700}
+  /* fib tint ramp: magnitude encoded as depth */
+  .chip[data-v="1"][aria-pressed="true"]{background:#7FB5C2;}
+  .chip[data-v="2"][aria-pressed="true"]{background:#5BA3B4;}
+  .chip[data-v="3"][aria-pressed="true"]{background:#3D92A6;}
+  .chip[data-v="5"][aria-pressed="true"]{background:#23829A;}
+  .chip[data-v="8"][aria-pressed="true"]{background:#0E7490;}
+  .chip[data-v="13"][aria-pressed="true"]{background:#0B5B72;}
+  .chip.wide{width:auto;padding:5px 11px;font-family:var(--sans)}
+  .chip.wide[aria-pressed="true"]{background:var(--ink);}
+  .tagchip{font-size:12.5px;border:1px solid var(--line);background:#FBFDFD;border-radius:99px;padding:4px 11px}
+  .tagchip[aria-pressed="true"]{background:var(--act-tint);border-color:var(--act);color:var(--act-deep);font-weight:600}
+  .split-warn{font-size:12.5px;color:var(--warn);background:var(--warn-bg);border-radius:6px;padding:6px 9px;margin-top:9px}
+
+  .dates{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px}
+  .dates>div{display:flex;flex-direction:column}
+
+  .ledger{border-top:1px solid var(--line);background:#F4F8F9;padding:10px 16px;
+          font-family:var(--mono);font-size:13px;color:var(--ink)}
+  .ledger .l2{color:var(--ink-soft);font-size:12px;margin-top:2px}
+  .ledger .miss{color:var(--hot)}
+  .actions{display:flex;gap:8px;justify-content:flex-end;padding:10px 16px;border-top:1px solid var(--line)}
+  .task-note{font-size:12px;color:var(--warn);padding:0 16px 10px}
+
+  .empty{border:1px dashed var(--line);border-radius:10px;padding:34px 16px;text-align:center;color:var(--ink-soft)}
+  .empty b{color:var(--ink)}
+
+  /* ---------- tabs & ranking ---------- */
+  .tabs{display:flex;gap:8px;margin:0 0 14px}
+  .tabs button{padding:7px 16px;border-radius:99px}
+  .tabs button[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:600}
+  .cfg input{width:64px;font-family:var(--mono);font-size:13px;text-align:center}
+  .scope{display:flex;gap:14px;flex-wrap:wrap}
+  .summary{font-size:13.5px}
+  .summary h3{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-soft);margin:16px 0 6px;font-weight:600}
+  .summary h3:first-child{margin-top:0}
+  .summary ul{margin:0;padding-left:18px}
+  .summary li{margin:3px 0}
+  .hotline{color:var(--hot);font-weight:600}
+  .rank-table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:2px}
+  .rank-table td{padding:6px 8px 6px 0;border-top:1px solid var(--line);vertical-align:top}
+  .rank-table tr:first-child td{border-top:none}
+  .band{font-family:var(--mono);font-size:11.5px;font-weight:700;border-radius:5px;padding:2px 7px;color:#fff;display:inline-block}
+  .band.b1{background:#0B5B72}.band.b2{background:#3D92A6}.band.b3{background:#9DBBC4}.band.hot{background:var(--hot)}
+  .wnum{font-family:var(--mono);font-size:12.5px;color:var(--ink-soft);white-space:nowrap}
+  .arrow-up{color:var(--ok);font-weight:700}.arrow-down{color:var(--warn);font-weight:700}
+
+  @media (prefers-reduced-motion: no-preference){
+    .task{transition:opacity .25s, transform .25s}
+    .task.gone{opacity:0;transform:translateX(14px)}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="bar">
+    <div class="wordmark">Intake<span class="dim">/console</span></div>
+    <div class="queue-count" id="qcount"></div>
+    <div class="spacer"></div>
+    <button id="timer" title="Spec §8.2 — intake is timeboxed">▸ 30:00 timebox</button>
+  </header>
+  <p class="tagline">Clarify · score · classify — then the item goes cold in Backlog. Ten seconds each; the gate does the rest.</p>
+
+  <section class="panel" id="setup">
+    <h2>Connection</h2>
+    <div class="row">
+      <div class="grow">
+        <label class="fld" for="token">Todoist API token <span style="font-weight:400">(Settings → Integrations → Developer)</span></label>
+        <input type="password" id="token" autocomplete="off" placeholder="paste token" style="width:100%">
+      </div>
+    </div>
+    <div class="row">
+      <label class="check"><input type="checkbox" id="remember"> Remember token on this device</label>
+      <div class="spacer"></div>
+      <button class="primary" id="connect">Load queue</button>
+    </div>
+    <div class="row" id="projrow" hidden>
+      <div>
+        <label class="fld" for="srcSel">Read from</label>
+        <select id="srcSel"></select>
+      </div>
+      <div>
+        <label class="fld" for="dstSel">After scoring, move to</label>
+        <select id="dstSel"></select>
+      </div>
+      <button class="quiet" id="refresh">Refresh</button>
+    </div>
+    <p class="hint">The token is sent only to <span style="font-family:var(--mono)">api.todoist.com</span> — this page has no server. “Remember” keeps it in this browser’s local storage in plain text; leave it unchecked on shared machines.</p>
+  </section>
+
+  <div id="status"></div>
+
+  <nav class="tabs" role="tablist">
+    <button id="tabIntake" role="tab" aria-selected="true">Intake</button>
+    <button id="tabRank" role="tab" aria-selected="false">Ranking</button>
+  </nav>
+
+  <section id="intakeView">
+    <div id="list"></div>
+  </section>
+
+  <section id="rankView" hidden>
+    <div class="panel">
+      <h2>Ranking pass — recompute TC → WSJF → bands</h2>
+      <div class="row scope" id="scopeRow"><span class="hint">Connect above to choose which projects to rank.</span></div>
+      <div class="row cfg">
+        <div><label class="fld" for="cfgS">slack threshold (d)</label><input type="text" id="cfgS" inputmode="numeric"></div>
+        <div><label class="fld" for="cfgT1">P1 band ≥ wsjf</label><input type="text" id="cfgT1" inputmode="numeric"></div>
+        <div><label class="fld" for="cfgT2">P2 band ≥ wsjf</label><input type="text" id="cfgT2" inputmode="numeric"></div>
+        <div class="spacer"></div>
+        <button class="primary" id="runRank">Recompute</button>
+      </div>
+      <p class="hint">TC is convex in slack: flat at 1 until slack drops below the threshold, rising to 13 at zero. Deadline-shape items at slack ≤ 0 jump to P1 outright (§5.6). Only items whose band or score materially moved are written back, in one batched call.</p>
+    </div>
+    <div class="panel summary" id="rankOut" hidden></div>
+  </section>
+</div>
+
+<script>
+"use strict";
+const API = "https://api.todoist.com/api/v1";
+const FIB = [1,2,3,5,8,13];
+const LEAD = {1:1, 2:2, 3:4, 5:7, 8:14, 13:28};          // effort -> start-by lead, days
+const SHAPES = ["standard","deadline","perishable","compounding"];
+const MECH_LABELS = new Set(["fastpull","perishable","compounding","blocked"]);
+const SCORE_RE = /^v(\d{1,2})\s*·\s*e(\d{1,2})\s*·\s*f(\d{1,2})\s*·\s*(standard|deadline|perishable|compounding)\s*·\s*s:(\d{4}-\d{2}-\d{2})\s*$/m;
+
+const $ = id => document.getElementById(id);
+let state = { token:"", projects:[], labels:[], tasks:[], srcId:null, dstId:null };
+
+/* ---------- storage (plain browser file; harmless if unavailable) ---------- */
+const store = {
+  get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } },
+  set(k,v){ try { localStorage.setItem(k,v); } catch(e){} },
+  del(k){ try { localStorage.removeItem(k); } catch(e){} }
+};
+
+/* ---------- api ---------- */
+async function api(path, opts={}){
+  const res = await fetch(API+path, {
+    ...opts,
+    headers: { "Authorization":"Bearer "+state.token,
+               ...(opts.body ? {"Content-Type":"application/json"} : {}),
+               ...(opts.headers||{}) }
+  });
+  if(!res.ok){
+    let detail=""; try{ detail = await res.text(); }catch(e){}
+    const err = new Error(`HTTP ${res.status} on ${path}${detail ? " — "+detail.slice(0,180) : ""}`);
+    err.status = res.status; throw err;
+  }
+  if(res.status===204) return null;
+  try { return await res.json(); } catch(e){ return null; }
+}
+async function listAll(path){
+  let out=[], cursor=null;
+  do{
+    const sep = path.includes("?") ? "&" : "?";
+    const data = await api(path + (cursor ? `${sep}cursor=${encodeURIComponent(cursor)}` : ""));
+    if(Array.isArray(data)){ out = out.concat(data); cursor = null; }
+    else { out = out.concat(data.results||[]); cursor = data.next_cursor || null; }
+  } while(cursor);
+  return out;
+}
+
+/* ---------- helpers ---------- */
+function todayISO(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function addDaysISO(iso, days){
+  const [y,m,d] = iso.split("-").map(Number);
+  const dt = new Date(y, m-1, d + days);
+  return dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0");
+}
+function fmtShort(iso){
+  if(!iso) return "";
+  const [y,m,d] = iso.split("-").map(Number);
+  return new Date(y,m-1,d).toLocaleDateString(undefined,{month:"short",day:"numeric"});
+}
+function setStatus(msg, isErr){ const s=$("status"); s.textContent=msg||""; s.className=isErr?"err":""; }
+function isBetLabel(name){ return /^bet[-_]/i.test(name); }
+
+/* ---------- connect / load ---------- */
+$("connect").addEventListener("click", connect);
+$("refresh").addEventListener("click", loadTasks);
+$("srcSel").addEventListener("change", e => { state.srcId = e.target.value; loadTasks(); });
+$("dstSel").addEventListener("change", e => { state.dstId = e.target.value; });
+
+(function init(){
+  const saved = store.get("jit_token");
+  if(saved){ $("token").value = saved; $("remember").checked = true; }
+})();
+
+async function connect(){
+  state.token = $("token").value.trim();
+  if(!state.token){ setStatus("Paste your API token first.", true); return; }
+  if($("remember").checked) store.set("jit_token", state.token); else store.del("jit_token");
+  setStatus("Connecting…");
+  try{
+    const [projects, labels] = await Promise.all([ listAll("/projects"), listAll("/labels") ]);
+    state.projects = projects; state.labels = labels;
+
+    const inbox   = projects.find(p => p.inbox_project) || projects[0];
+    const backlog = projects.find(p => /^backlog$/i.test(p.name||""));
+    const src=$("srcSel"), dst=$("dstSel");
+    src.innerHTML=""; dst.innerHTML="";
+    const stay = document.createElement("option");
+    stay.value=""; stay.textContent="(leave in place — re-validate)"; dst.appendChild(stay);
+    for(const p of projects){
+      const o1=document.createElement("option"); o1.value=p.id; o1.textContent=p.name; src.appendChild(o1);
+      const o2=document.createElement("option"); o2.value=p.id; o2.textContent=p.name; dst.appendChild(o2);
+    }
+    state.srcId = inbox ? inbox.id : projects[0]?.id;
+    state.dstId = backlog ? backlog.id : "";
+    src.value = state.srcId; dst.value = state.dstId;
+    $("projrow").hidden = false;
+    buildScope();
+    if(!backlog) setStatus("No project named “Backlog” found — pick a destination, or choose “leave in place”.");
+    await loadTasks();
+  }catch(err){
+    setStatus("Connection failed: "+err.message + (err.status===401 ? "  (check the token)" : ""), true);
+  }
+}
+
+async function loadTasks(){
+  if(!state.srcId) return;
+  setStatus("Loading tasks…");
+  try{
+    state.tasks = await listAll("/tasks?project_id="+encodeURIComponent(state.srcId));
+    render();
+    setStatus("");
+  }catch(err){ setStatus("Could not load tasks: "+err.message, true); }
+}
+
+/* ---------- render ---------- */
+function render(){
+  const list = $("list"); list.innerHTML = "";
+  $("qcount").textContent = state.tasks.length ? state.tasks.length+" in queue" : "";
+  if(!state.tasks.length){
+    const d = document.createElement("div"); d.className="empty";
+    d.innerHTML = "<b>Queue empty.</b><br>Inbox zero — the gate can run.";
+    list.appendChild(d); return;
+  }
+  for(const t of state.tasks) list.appendChild(card(t));
+}
+
+function card(t){
+  // model: pre-fill from an existing score line if present (re-validation, §7.1)
+  const m = (t.description||"").match(SCORE_RE);
+  const sel = {
+    v: m ? +m[1] : null, e: m ? +m[2] : null, f: m ? +m[3] : null,
+    shape: m ? m[4] : (t.deadline && t.deadline.date ? "deadline" : "standard"),
+    labels: new Set(t.labels||[]),
+    deadline: t.deadline && t.deadline.date ? t.deadline.date : "",
+    startBy: t.due && t.due.date ? String(t.due.date).slice(0,10) : "",
+    startByTouched: !!(t.due && t.due.date)
+  };
+
+  const el = document.createElement("article"); el.className="task";
+  const body = document.createElement("div"); body.className="body";
+  el.appendChild(body);
+
+  // title (clarify step)
+  const title = document.createElement("input");
+  title.type="text"; title.className="title"; title.value=t.content||""; title.setAttribute("aria-label","Task title");
+  body.appendChild(title);
+
+  // existing description (minus old score line)
+  const restDesc = (t.description||"").replace(SCORE_RE,"").trim();
+  if(restDesc){
+    const od = document.createElement("div"); od.className="orig-desc"; od.textContent=restDesc; body.appendChild(od);
+  }
+
+  // score rows
+  const mkFibRow = (label, key) => {
+    const row = document.createElement("div"); row.className="dimrow";
+    const lab = document.createElement("div"); lab.className="dim-label"; lab.textContent=label; row.appendChild(lab);
+    const chips = document.createElement("div"); chips.className="chips"; row.appendChild(chips);
+    for(const n of FIB){
+      const b = document.createElement("button"); b.type="button"; b.className="chip"; b.dataset.v=n; b.textContent=n;
+      b.setAttribute("aria-pressed", String(sel[key]===n));
+      b.addEventListener("click", ()=>{
+        sel[key] = n;
+        chips.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed", String(+c.dataset.v===n)));
+        if(key==="f" && !sel.startByTouched && sel.deadline){ sel.startBy = addDaysISO(sel.deadline, -LEAD[n]); startInput.value = sel.startBy; }
+        sync();
+      });
+      chips.appendChild(b);
+    }
+    return row;
+  };
+  body.appendChild(mkFibRow("Value","v"));
+  body.appendChild(mkFibRow("Enable","e"));
+  body.appendChild(mkFibRow("Effort","f"));
+
+  const splitWarn = document.createElement("div"); splitWarn.className="split-warn"; splitWarn.hidden=true;
+  splitWarn.textContent = "Effort ≥ 8 — decompose before it enters Backlog (§5.3). Save the first slice instead.";
+  body.appendChild(splitWarn);
+
+  // shape
+  const shapeRow = document.createElement("div"); shapeRow.className="dimrow";
+  const shapeLab = document.createElement("div"); shapeLab.className="dim-label"; shapeLab.textContent="Shape";
+  shapeRow.appendChild(shapeLab);
+  const shapeChips = document.createElement("div"); shapeChips.className="chips";
+  for(const s of SHAPES){
+    const b=document.createElement("button"); b.type="button"; b.className="chip wide"; b.textContent=s;
+    b.setAttribute("aria-pressed", String(sel.shape===s));
+    b.addEventListener("click", ()=>{
+      sel.shape=s;
+      shapeChips.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed", String(c.textContent===s)));
+      dates.style.display = (s==="deadline") ? "flex" : "none";
+      sync();
+    });
+    shapeChips.appendChild(b);
+  }
+  shapeRow.appendChild(shapeChips);
+  body.appendChild(shapeRow);
+
+  // dates (deadline shape)
+  const dates = document.createElement("div"); dates.className="dates";
+  dates.style.display = sel.shape==="deadline" ? "flex" : "none";
+  const dWrap=document.createElement("div");
+  dWrap.innerHTML='<label class="fld">Deadline (hard due)</label>';
+  const dlInput=document.createElement("input"); dlInput.type="date"; dlInput.value=sel.deadline; dWrap.appendChild(dlInput);
+  const sWrap=document.createElement("div");
+  sWrap.innerHTML='<label class="fld">Start-by (Date field)</label>';
+  const startInput=document.createElement("input"); startInput.type="date"; startInput.value=sel.startBy; sWrap.appendChild(startInput);
+  dates.appendChild(dWrap); dates.appendChild(sWrap);
+  body.appendChild(dates);
+  dlInput.addEventListener("change", ()=>{
+    sel.deadline = dlInput.value;
+    if(sel.deadline && sel.f && !sel.startByTouched){ sel.startBy = addDaysISO(sel.deadline, -LEAD[sel.f]); startInput.value = sel.startBy; }
+    sync();
+  });
+  startInput.addEventListener("change", ()=>{ sel.startBy = startInput.value; sel.startByTouched = true; sync(); });
+
+  // labels: bets then areas
+  const betNames  = state.labels.map(l=>l.name).filter(isBetLabel);
+  const areaNames = state.labels.map(l=>l.name).filter(n=>!isBetLabel(n) && !MECH_LABELS.has(n.toLowerCase()));
+  const mkTagRow = (labelText, names) => {
+    if(!names.length) return null;
+    const row=document.createElement("div"); row.className="dimrow";
+    const lab=document.createElement("div"); lab.className="dim-label"; lab.textContent=labelText; row.appendChild(lab);
+    const chips=document.createElement("div"); chips.className="chips"; row.appendChild(chips);
+    for(const n of names){
+      const b=document.createElement("button"); b.type="button"; b.className="tagchip"; b.textContent="@"+n;
+      b.setAttribute("aria-pressed", String(sel.labels.has(n)));
+      b.addEventListener("click", ()=>{
+        sel.labels.has(n) ? sel.labels.delete(n) : sel.labels.add(n);
+        b.setAttribute("aria-pressed", String(sel.labels.has(n)));
+      });
+      chips.appendChild(b);
+    }
+    return row;
+  };
+  const betsRow = mkTagRow("Bet", betNames);  if(betsRow)  body.appendChild(betsRow);
+  const areaRow = mkTagRow("Area", areaNames); if(areaRow) body.appendChild(areaRow);
+
+  // ledger (live score-line preview)
+  const ledger=document.createElement("div"); ledger.className="ledger";
+  const l1=document.createElement("div"); const l2=document.createElement("div"); l2.className="l2";
+  ledger.appendChild(l1); ledger.appendChild(l2);
+  el.appendChild(ledger);
+
+  const note=document.createElement("div"); note.className="task-note"; note.hidden=true; el.appendChild(note);
+
+  // actions
+  const actions=document.createElement("div"); actions.className="actions";
+  const skipBtn=document.createElement("button"); skipBtn.className="quiet"; skipBtn.textContent="Skip";
+  const saveBtn=document.createElement("button"); saveBtn.className="primary";
+  actions.appendChild(skipBtn); actions.appendChild(saveBtn);
+  el.appendChild(actions);
+
+  skipBtn.addEventListener("click", ()=>{ el.classList.add("gone"); setTimeout(()=>el.remove(),250); });
+
+  function scoreLine(){
+    return `v${sel.v??"·"} · e${sel.e??"·"} · f${sel.f??"·"} · ${sel.shape} · s:${todayISO()}`;
+  }
+  function sync(){
+    const ready = sel.v && sel.e && sel.f && (sel.shape!=="deadline" || sel.deadline);
+    l1.textContent = scoreLine();
+    if(sel.shape==="deadline"){
+      if(sel.deadline && sel.f){
+        l2.innerHTML=""; l2.textContent =
+          `start-by = ${fmtShort(sel.deadline)} − ${LEAD[sel.f]}d lead → ${fmtShort(sel.startBy || addDaysISO(sel.deadline,-LEAD[sel.f]))}`;
+      } else { l2.innerHTML='<span class="miss">deadline date required for deadline shape</span>'; }
+    } else if(sel.shape==="perishable" || sel.shape==="compounding"){
+      l2.textContent = "adds @"+sel.shape+" label";
+    } else { l2.textContent = "flat cost of delay — competes on score alone"; }
+    splitWarn.hidden = !(sel.f>=8);
+    saveBtn.textContent = state.dstId && state.dstId!==t.project_id ? "Score & move" : "Score & save";
+    saveBtn.disabled = !ready;
+  }
+  sync();
+
+  saveBtn.addEventListener("click", async ()=>{
+    saveBtn.disabled=true; skipBtn.disabled=true; note.hidden=true;
+    const newDesc = (scoreLine() + (restDesc ? "\n"+restDesc : "")).trim();
+    const labels = Array.from(sel.labels);
+    if(sel.shape==="perishable"||sel.shape==="compounding"){ if(!labels.includes(sel.shape)) labels.push(sel.shape); }
+    const payload = { content:title.value.trim()||t.content, description:newDesc, labels };
+    if(sel.shape==="deadline" && sel.startBy) payload.due_date = sel.startBy;
+    if(sel.shape==="deadline" && sel.deadline){ payload.deadline_date = sel.deadline; payload.deadline_lang = "en"; }
+    try{
+      try{
+        await api("/tasks/"+t.id, {method:"POST", body: JSON.stringify(payload)});
+      }catch(err){
+        // Deadline field is Pro-only; retry without it rather than losing the whole save.
+        if(err.status===400 && payload.deadline_date){
+          delete payload.deadline_date; delete payload.deadline_lang;
+          await api("/tasks/"+t.id, {method:"POST", body: JSON.stringify(payload)});
+          note.textContent="Saved, but the Deadline field was rejected (Pro-only?). Add the due date in Todoist or note it in the description.";
+          note.hidden=false;
+        } else { throw err; }
+      }
+      if(state.dstId && state.dstId!==t.project_id){
+        await api("/tasks/"+t.id+"/move", {method:"POST", body: JSON.stringify({project_id: state.dstId})});
+      }
+      el.classList.add("gone"); setTimeout(()=>{ el.remove(); bumpCount(); },250);
+    }catch(err){
+      note.textContent="Save failed: "+err.message; note.hidden=false;
+      saveBtn.disabled=false; skipBtn.disabled=false;
+    }
+  });
+
+  return el;
+}
+
+function bumpCount(){
+  const n = document.querySelectorAll(".task").length;
+  $("qcount").textContent = n ? n+" in queue" : "";
+  if(!n){ const list=$("list"); const d=document.createElement("div"); d.className="empty";
+    d.innerHTML="<b>Queue empty.</b><br>Inbox zero — the gate can run."; list.appendChild(d); }
+}
+
+/* ---------- tabs ---------- */
+function showTab(which){
+  const intake = which==="intake";
+  $("intakeView").hidden = !intake;
+  $("rankView").hidden  =  intake;
+  $("tabIntake").setAttribute("aria-selected", String(intake));
+  $("tabRank").setAttribute("aria-selected", String(!intake));
+}
+$("tabIntake").addEventListener("click", ()=>showTab("intake"));
+$("tabRank").addEventListener("click", ()=>showTab("rank"));
+
+/* ---------- ranking pass (the Option A compute, in-page) ---------- */
+const RANK_RE = /^wsjf:.*$/m;
+const API_PRI = {1:4, 2:3, 3:2};                       // band -> API priority (4 = UI P1)
+const PRI_BAND = {4:1, 3:2, 2:3, 1:null};              // API priority -> band
+const cfg = Object.assign({S:14, t1:6, t2:3}, (()=>{ try{ return JSON.parse(store.get("jit_cfg")||"{}"); }catch(e){ return {}; } })());
+
+function bindCfg(id, key){
+  const inp=$(id); inp.value=cfg[key];
+  inp.addEventListener("change", ()=>{
+    const n=parseFloat(inp.value);
+    if(isFinite(n) && n>0){ cfg[key]=n; store.set("jit_cfg", JSON.stringify(cfg)); }
+    inp.value=cfg[key];
+  });
+}
+bindCfg("cfgS","S"); bindCfg("cfgT1","t1"); bindCfg("cfgT2","t2");
+
+function buildScope(){
+  const row=$("scopeRow"); row.innerHTML="";
+  for(const p of state.projects){
+    if(p.inbox_project) continue;
+    const l=document.createElement("label"); l.className="check";
+    const c=document.createElement("input"); c.type="checkbox"; c.value=p.id;
+    c.checked = /^(eligible|backlog)$/i.test(p.name||"");
+    l.appendChild(c); l.append(" "+p.name);
+    row.appendChild(l);
+  }
+}
+
+function daysUntil(iso){
+  const [y,m,d]=iso.slice(0,10).split("-").map(Number);
+  const a=new Date(y,m-1,d), b=new Date(); b.setHours(0,0,0,0);
+  return Math.round((a-b)/86400000);
+}
+const round1 = x => Math.round(x*10)/10;
+const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : "u"+Date.now()+"-"+Math.random().toString(16).slice(2));
+
+function parseScore(desc){
+  const m=(desc||"").match(SCORE_RE);
+  return m ? {v:+m[1], e:+m[2], f:+m[3], shape:m[4], scored:m[5]} : null;
+}
+function parseOldW(desc){
+  const m=(desc||"").match(/^wsjf:(\d+(?:\.\d+)?)/m);
+  return m ? +m[1] : null;
+}
+
+// TC: convex in slack for dated items; shape baseline (with drift since scoring) for undated.
+function computeTC(s, slack){
+  if(slack!==null){
+    if(slack<=0) return 13;
+    if(slack>=cfg.S) return 1;
+    return Math.round(1 + 12*Math.pow((cfg.S-slack)/cfg.S, 2));
+  }
+  const age = Math.max(0, -daysUntil(s.scored));
+  if(s.shape==="perishable")  return Math.max(3, 8 - Math.floor(age/7));
+  if(s.shape==="compounding") return Math.min(8, 2 + Math.floor(age/30));
+  return 1;
+}
+
+async function syncWrite(cmds){
+  const failed=[];
+  for(let i=0;i<cmds.length;i+=80){
+    const chunk=cmds.slice(i,i+80);
+    const res=await fetch(API+"/sync",{
+      method:"POST",
+      headers:{Authorization:"Bearer "+state.token},
+      body:new URLSearchParams({commands:JSON.stringify(chunk)})
+    });
+    if(!res.ok) throw new Error("sync HTTP "+res.status);
+    const data=await res.json();
+    for(const [u,st] of Object.entries(data.sync_status||{}))
+      if(st!=="ok") failed.push(u+": "+(st.error||JSON.stringify(st)));
+  }
+  return failed;
+}
+
+$("runRank").addEventListener("click", runRank);
+async function runRank(){
+  if(!state.token || !state.projects.length){ setStatus("Connect first (top panel).", true); showTab("rank"); return; }
+  const ids=[...document.querySelectorAll("#scopeRow input:checked")].map(c=>c.value);
+  if(!ids.length){ setStatus("Pick at least one project to rank.", true); return; }
+  const btn=$("runRank"); btn.disabled=true; setStatus("Ranking pass: fetching…");
+  try{
+    let tasks=[];
+    for(const id of ids) tasks=tasks.concat(await listAll("/tasks?project_id="+encodeURIComponent(id)));
+
+    const today=todayISO();
+    const ranked=[], unscored=[], stale=[], shapeErr=[], changes=[], cmds=[];
+
+    for(const t of tasks){
+      const s=parseScore(t.description);
+      if(!s){ unscored.push(t.content); continue; }
+
+      const dl = t.deadline && t.deadline.date ? t.deadline.date : null;
+      const due = t.due && t.due.date ? String(t.due.date).slice(0,10) : null;
+      let slack=null;
+      if(s.shape==="deadline"){
+        if(dl) slack = daysUntil(dl) - (LEAD[s.f]||0);
+        else if(due) slack = daysUntil(due);          // Date field already is start-by
+        else shapeErr.push(t.content);
+      } else if(due) slack = daysUntil(due);          // dated upkeep: Date = start-by
+
+      const tc=computeTC(s, slack);
+      const override = s.shape==="deadline" && slack!==null && slack<=0;
+      const w=round1((s.v+tc+s.e)/s.f);
+      const band = override ? 1 : (w>=cfg.t1 ? 1 : w>=cfg.t2 ? 2 : 3);
+      const oldBand=PRI_BAND[t.priority] ?? null;
+      const oldW=parseOldW(t.description);
+
+      if(Math.max(0,-daysUntil(s.scored))>90) stale.push(t.content);
+
+      const rankLine=`wsjf:${w} · tc:${tc}${slack!==null?` · slack:${slack}d`:""} · r:${today}`;
+      let nd=t.description;
+      nd = RANK_RE.test(nd) ? nd.replace(RANK_RE, rankLine)
+                            : nd.replace(SCORE_RE, m0 => m0+"\n"+rankLine);
+
+      const material = oldW===null || band!==oldBand || Math.abs(w-(oldW??w))>=0.5;
+      if(material){
+        cmds.push({type:"item_update", uuid:uuid(), args:{id:t.id, priority:API_PRI[band], description:nd}});
+        if(oldBand!==null && band!==oldBand) changes.push({title:t.content, from:oldBand, to:band, w});
+      }
+      ranked.push({title:t.content, w, band, slack, override});
+    }
+
+    setStatus(cmds.length ? `Writing ${cmds.length} update${cmds.length>1?"s":""}…` : "Computing…");
+    const failed = cmds.length ? await syncWrite(cmds) : [];
+    renderRankSummary({ranked, unscored, stale, shapeErr, changes, written:cmds.length, failed});
+    setStatus("");
+  }catch(err){ setStatus("Ranking pass failed: "+err.message, true); }
+  btn.disabled=false;
+}
+
+function esc(s){ const d=document.createElement("span"); d.textContent=s||""; return d.innerHTML; }
+function nameList(arr, cap=8){
+  const shown=arr.slice(0,cap).map(n=>`<li>${esc(n)}</li>`).join("");
+  const more=arr.length>cap?`<li>… +${arr.length-cap} more</li>`:"";
+  return `<ul>${shown}${more}</ul>`;
+}
+
+function renderRankSummary(r){
+  const out=$("rankOut"); out.hidden=false;
+  r.ranked.sort((a,b)=> (b.override-a.override) || (b.w-a.w));
+  const hot=r.ranked.filter(x=>x.override);
+  let h=`<h3>Run</h3><div>${r.ranked.length} scored item${r.ranked.length===1?"":"s"} ranked · ${r.written} written back · ${r.ranked.length-r.written} unchanged</div>`;
+
+  if(hot.length){
+    h+=`<h3>Overdue-to-start — pull first, no debate</h3><ul>`+
+       hot.map(x=>`<li class="hotline">${esc(x.title)} <span class="wnum">slack ${x.slack}d</span></li>`).join("")+`</ul>`;
+  }
+  if(r.changes.length){
+    h+=`<h3>Band moves</h3><ul>`+r.changes.map(c=>{
+      const up=c.to<c.from;
+      return `<li><span class="${up?"arrow-up":"arrow-down"}">${up?"↑":"↓"}</span> ${esc(c.title)} <span class="wnum">P${c.from} → P${c.to} · wsjf ${c.w}</span></li>`;
+    }).join("")+`</ul>`;
+  }
+  const top=r.ranked.slice(0,15);
+  if(top.length){
+    h+=`<h3>Current ranking (top ${top.length})</h3><table class="rank-table">`+
+       top.map(x=>`<tr><td><span class="band ${x.override?"hot":"b"+x.band}">${x.override?"🔥P1":"P"+x.band}</span></td>`+
+                  `<td>${esc(x.title)}</td>`+
+                  `<td class="wnum">wsjf ${x.w}${x.slack!==null?` · slack ${x.slack}d`:""}</td></tr>`).join("")+`</table>`;
+  }
+  if(r.stale.length)   h+=`<h3>Stale scores (&gt;90 d) — re-validate at the gate (§7.1)</h3>`+nameList(r.stale);
+  if(r.unscored.length)h+=`<h3>No score line — run intake on these</h3>`+nameList(r.unscored);
+  if(r.shapeErr.length)h+=`<h3>Deadline shape but no date — fix in Todoist</h3>`+nameList(r.shapeErr);
+  if(r.failed.length)  h+=`<h3>Write failures</h3>`+nameList(r.failed);
+  out.innerHTML=h;
+}
+
+
+let timerId=null, remain=30*60;
+$("timer").addEventListener("click", ()=>{
+  const btn=$("timer");
+  if(timerId){ clearInterval(timerId); timerId=null; remain=30*60; btn.className=""; btn.textContent="▸ 30:00 timebox"; return; }
+  btn.className="running";
+  timerId=setInterval(()=>{
+    remain--;
+    const mm=String(Math.max(0,Math.floor(remain/60))).padStart(2,"0"), ss=String(Math.max(0,remain%60)).padStart(2,"0");
+    btn.textContent="⏱ "+mm+":"+ss;
+    if(remain<=0){ clearInterval(timerId); timerId=null; btn.className="over"; btn.textContent="⏱ over — degraded mode"; }
+  },1000);
+});
+</script>
+</body>
+</html>
