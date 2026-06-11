@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JIT Intake Console</title>
+<title>JIT Console</title>
 <style>
   :root{
     --paper:#ECF1F2; --card:#FFFFFF; --ink:#15303A; --ink-soft:#5C737C;
@@ -24,6 +24,7 @@
   header.bar{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:6px}
   .wordmark{font-family:var(--mono);font-size:18px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
   .wordmark .dim{color:var(--ink-soft);font-weight:400}
+  .wordmark .ver{font-size:11px;color:var(--ink-soft);font-weight:400;letter-spacing:.04em;text-transform:none;margin-left:7px}
   .queue-count{font-family:var(--mono);font-size:13px;color:var(--ink-soft)}
   .spacer{flex:1}
   #timer{font-family:var(--mono);font-size:13px;border:1px solid var(--line);background:var(--card);
@@ -98,6 +99,24 @@
   .empty{border:1px dashed var(--line);border-radius:10px;padding:34px 16px;text-align:center;color:var(--ink-soft)}
   .empty b{color:var(--ink)}
 
+  /* ---------- clarify ---------- */
+  .sub-bar{margin:2px 2px 12px}
+  .qrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:11px}
+  .qrow .qtext{font-size:13.5px;min-width:150px}
+  .qrow button{padding:5px 12px;font-size:13px;border-radius:99px}
+  .qrow.answered .qtext{color:var(--ink-soft)}
+  .qrow.answered button{opacity:.35}
+  .qrow.answered button.chosen{opacity:1;background:var(--ink);border-color:var(--ink);color:#fff;font-weight:600}
+  button.go{background:var(--ok);border-color:var(--ok);color:#fff;font-weight:600}
+  button.danger{background:#fff;border-color:var(--hot);color:var(--hot)}
+  button.danger.armed{background:var(--hot);color:#fff}
+  .restart{font-size:12px;color:var(--ink-soft);background:none;border:none;padding:2px;text-decoration:underline;cursor:pointer}
+  .pill{display:inline-block;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:.08em;
+        background:var(--act-tint);color:var(--act-deep);border:1px solid var(--act);border-radius:6px;padding:3px 9px;margin-top:14px}
+  .oblig{display:block;font-size:9px;letter-spacing:.06em;font-weight:700;color:var(--hot);text-transform:uppercase}
+  .oblig.should{color:var(--ink-soft);font-weight:400}
+  .timefld{width:84px;font-family:var(--mono);font-size:13px}
+
   /* ---------- tabs & ranking ---------- */
   .tabs{display:flex;gap:8px;margin:0 0 14px}
   .tabs button{padding:7px 16px;border-radius:99px}
@@ -127,12 +146,12 @@
 <body>
 <div class="wrap">
   <header class="bar">
-    <div class="wordmark">Intake<span class="dim">/console</span></div>
+    <div class="wordmark">JIT<span class="dim">/console</span><span class="ver">v1.3</span></div>
     <div class="queue-count" id="qcount"></div>
     <div class="spacer"></div>
     <button id="timer" title="Spec §8.2 — intake is timeboxed">▸ 30:00 timebox</button>
   </header>
-  <p class="tagline">Clarify · score · classify — then the item goes cold in Backlog. Ten seconds each; the gate does the rest.</p>
+  <p class="tagline">Clarify routes (frequent, light) · Score ranks (weekly, batched) · Ranking computes. Two phases, one gate.</p>
 
   <section class="panel" id="setup">
     <h2>Connection</h2>
@@ -149,14 +168,13 @@
     </div>
     <div class="row" id="projrow" hidden>
       <div>
-        <label class="fld" for="srcSel">Read from</label>
+        <label class="fld" for="srcSel">Score tab reads from</label>
         <select id="srcSel"></select>
       </div>
       <div>
         <label class="fld" for="dstSel">After scoring, move to</label>
         <select id="dstSel"></select>
       </div>
-      <button class="quiet" id="refresh">Refresh</button>
     </div>
     <p class="hint">The token is sent only to <span style="font-family:var(--mono)">api.todoist.com</span> — this page has no server. “Remember” keeps it in this browser’s local storage in plain text; leave it unchecked on shared machines.</p>
   </section>
@@ -164,11 +182,27 @@
   <div id="status"></div>
 
   <nav class="tabs" role="tablist">
-    <button id="tabIntake" role="tab" aria-selected="true">Intake</button>
+    <button id="tabClarify" role="tab" aria-selected="true">Clarify</button>
+    <button id="tabIntake" role="tab" aria-selected="false">Score</button>
     <button id="tabRank" role="tab" aria-selected="false">Ranking</button>
   </nav>
 
-  <section id="intakeView">
+  <section id="clarifyView">
+    <div class="row sub-bar">
+      <span class="hint" id="csrcNote">Reads the Inbox — route each item with the tree, then it lands in Backlog unscored.</span>
+      <div class="spacer"></div>
+      <button class="quiet" id="crefresh">Refresh</button>
+    </div>
+    <div id="clist"></div>
+  </section>
+
+  <section id="intakeView" hidden>
+    <div class="row sub-bar">
+      <label class="check"><input type="checkbox" id="unscoredOnly" checked> unscored only</label>
+      <span class="hint">(untick for §7.1 re-validation of already-scored items)</span>
+      <div class="spacer"></div>
+      <button class="quiet" id="refresh">Refresh</button>
+    </div>
     <div id="list"></div>
   </section>
 
@@ -195,16 +229,25 @@ const API = "https://api.todoist.com/api/v1";
 const FIB = [1,2,3,5,8,13];
 const LEAD = {1:1, 2:2, 3:4, 5:7, 8:14, 13:28};          // effort -> start-by lead, days
 const SHAPES = ["standard","deadline","perishable","compounding"];
-const LABEL_GROUPS = [            // row name -> label prefix; labels outside these groups are untouched
-  ["Bet",   /^bet[-_]/i],
-  ["Area",  /^area[-_]/i],
-  ["Who",   /^who[-_]/i],
-  ["Where", /^where[-_]/i],
-];
+const SCORE_GROUPS = [["Bet", /^bet[-_]/i]];     // phase two: ranking inputs only
+const CTX = {                                     // phase one: recoverability contexts (GTD §4)
+  area:     ["Area",     /^area[-_]/i],
+  who:      ["Who",      /^who[-_]/i],
+  where:    ["Where",    /^where[-_]/i],
+  duration: ["Duration", /^duration[-_]/i],
+};
+// GTD §4.3 context-to-task mapping. must = solid line, should = dashed; everything else may.
+const TERMINALS = {
+  waiting:     {title:"WAITING — delegated, pending someone else", musts:["who"],               shoulds:["where","duration","date"], dateLabel:"Revisit (tickler)"},
+  agenda:      {title:"AGENDA — meeting-bound",                    musts:["date"],              shoulds:["who"],                     dateLabel:"When (go)"},
+  errand:      {title:"ERRAND — requires a trip",                  musts:["where","duration"],  shoulds:[],                          dateLabel:"When (optional)"},
+  calendar:    {title:"CALENDAR — time-specific",                  musts:["date","duration"],   shoulds:[],                          dateLabel:"Happening on", time:true},
+  next_action: {title:"NEXT ACTION — do when in context",          musts:[],                    shoulds:["where","duration","date"], dateLabel:"When (need, optional)"},
+};
 const SCORE_RE = /^v(\d{1,2})\s*·\s*e(\d{1,2})\s*·\s*f(\d{1,2})\s*·\s*(standard|deadline|perishable|compounding)\s*·\s*s:(\d{4}-\d{2}-\d{2})\s*$/m;
 
 const $ = id => document.getElementById(id);
-let state = { token:"", projects:[], labels:[], tasks:[], srcId:null, dstId:null };
+let state = { token:"", projects:[], labels:[], tasks:[], ctasks:[], srcId:null, dstId:null, inboxId:null, backlogId:null };
 
 /* ---------- storage (plain browser file; harmless if unavailable) ---------- */
 const store = {
@@ -257,6 +300,8 @@ function setStatus(msg, isErr){ const s=$("status"); s.textContent=msg||""; s.cl
 /* ---------- connect / load ---------- */
 $("connect").addEventListener("click", connect);
 $("refresh").addEventListener("click", loadTasks);
+$("crefresh").addEventListener("click", loadClarify);
+$("unscoredOnly").addEventListener("change", render);
 $("srcSel").addEventListener("change", e => { state.srcId = e.target.value; loadTasks(); });
 $("dstSel").addEventListener("change", e => { state.dstId = e.target.value; });
 
@@ -264,6 +309,8 @@ $("dstSel").addEventListener("change", e => { state.dstId = e.target.value; });
   const saved = store.get("jit_token");
   if(saved){ $("token").value = saved; $("remember").checked = true; }
 })();
+
+function findProj(rx){ return state.projects.find(p => rx.test(p.name||"")); }
 
 async function connect(){
   state.token = $("token").value.trim();
@@ -275,25 +322,39 @@ async function connect(){
     state.projects = projects; state.labels = labels;
 
     const inbox   = projects.find(p => p.inbox_project) || projects[0];
-    const backlog = projects.find(p => /^backlog$/i.test(p.name||""));
+    const backlog = findProj(/^backlog$/i);
+    state.inboxId   = inbox ? inbox.id : null;
+    state.backlogId = backlog ? backlog.id : null;
+
     const src=$("srcSel"), dst=$("dstSel");
     src.innerHTML=""; dst.innerHTML="";
     const stay = document.createElement("option");
-    stay.value=""; stay.textContent="(leave in place — re-validate)"; dst.appendChild(stay);
+    stay.value=""; stay.textContent="(leave in place)"; dst.appendChild(stay);
     for(const p of projects){
       const o1=document.createElement("option"); o1.value=p.id; o1.textContent=p.name; src.appendChild(o1);
       const o2=document.createElement("option"); o2.value=p.id; o2.textContent=p.name; dst.appendChild(o2);
     }
-    state.srcId = inbox ? inbox.id : projects[0]?.id;
-    state.dstId = backlog ? backlog.id : "";
+    // split defaults: clarify is hard-wired to Inbox; Score reads Backlog and leaves items in place
+    state.srcId = backlog ? backlog.id : (inbox ? inbox.id : projects[0]?.id);
+    state.dstId = "";
     src.value = state.srcId; dst.value = state.dstId;
     $("projrow").hidden = false;
     buildScope();
-    if(!backlog) setStatus("No project named “Backlog” found — pick a destination, or choose “leave in place”.");
-    await loadTasks();
+    if(!backlog) setStatus("No project named “Backlog” found — clarify needs one as its filing destination.", true);
+    await Promise.all([loadTasks(), loadClarify()]);
   }catch(err){
     setStatus("Connection failed: "+err.message + (err.status===401 ? "  (check the token)" : ""), true);
   }
+}
+
+async function loadClarify(){
+  if(!state.inboxId) return;
+  setStatus("Loading inbox…");
+  try{
+    state.ctasks = await listAll("/tasks?project_id="+encodeURIComponent(state.inboxId));
+    renderClarify();
+    setStatus("");
+  }catch(err){ setStatus("Could not load inbox: "+err.message, true); }
 }
 
 async function loadTasks(){
@@ -306,16 +367,20 @@ async function loadTasks(){
   }catch(err){ setStatus("Could not load tasks: "+err.message, true); }
 }
 
-/* ---------- render ---------- */
+/* ---------- render: score queue ---------- */
 function render(){
   const list = $("list"); list.innerHTML = "";
-  $("qcount").textContent = state.tasks.length ? state.tasks.length+" in queue" : "";
-  if(!state.tasks.length){
+  const only = $("unscoredOnly").checked;
+  const shown = only ? state.tasks.filter(t => !SCORE_RE.test(t.description||"")) : state.tasks;
+  if(!shown.length){
     const d = document.createElement("div"); d.className="empty";
-    d.innerHTML = "<b>Queue empty.</b><br>Inbox zero — the gate can run.";
-    list.appendChild(d); return;
+    d.innerHTML = only ? "<b>Nothing unscored.</b><br>The scoring pass is done — the gate can run."
+                       : "<b>Queue empty.</b>";
+    list.appendChild(d);
+  } else {
+    for(const t of shown) list.appendChild(card(t));
   }
-  for(const t of state.tasks) list.appendChild(card(t));
+  updateQCount();
 }
 
 function card(t){
@@ -408,7 +473,7 @@ function card(t){
   });
   startInput.addEventListener("change", ()=>{ sel.startBy = startInput.value; sel.startByTouched = true; sync(); });
 
-  // labels, grouped by prefix convention: bet-* / area-* / who-* / where-*
+  // labels: phase two shows only ranking inputs (Bet); contexts are clarify's job
   const mkTagRow = (labelText, names, rx) => {
     if(!names.length) return null;
     const row=document.createElement("div"); row.className="dimrow";
@@ -426,7 +491,7 @@ function card(t){
     }
     return row;
   };
-  for(const [groupName, rx] of LABEL_GROUPS){
+  for(const [groupName, rx] of SCORE_GROUPS){
     const names = state.labels.map(l=>l.name).filter(n=>rx.test(n)).sort();
     const row = mkTagRow(groupName, names, rx);
     if(row) body.appendChild(row);
@@ -502,22 +567,37 @@ function card(t){
   return el;
 }
 
+function updateQCount(){
+  const c = $("clist").querySelectorAll(".task").length;
+  const s = $("list").querySelectorAll(".task").length;
+  const parts=[]; if(c) parts.push(c+" to clarify"); if(s) parts.push(s+" to score");
+  $("qcount").textContent = parts.join(" · ");
+}
 function bumpCount(){
-  const n = document.querySelectorAll(".task").length;
-  $("qcount").textContent = n ? n+" in queue" : "";
-  if(!n){ const list=$("list"); const d=document.createElement("div"); d.className="empty";
-    d.innerHTML="<b>Queue empty.</b><br>Inbox zero — the gate can run."; list.appendChild(d); }
+  updateQCount();
+  const empties = [
+    ["clist","<b>Inbox zero.</b><br>Clarify done — capture can keep flowing."],
+    ["list","<b>Queue empty.</b><br>Nothing left to score — the gate can run."]
+  ];
+  for(const [id,msg] of empties){
+    const l=$(id);
+    if(l && !l.querySelector(".task") && !l.querySelector(".empty")){
+      const d=document.createElement("div"); d.className="empty"; d.innerHTML=msg; l.appendChild(d);
+    }
+  }
 }
 
 /* ---------- tabs ---------- */
 function showTab(which){
-  const intake = which==="intake";
-  $("intakeView").hidden = !intake;
-  $("rankView").hidden  =  intake;
-  $("tabIntake").setAttribute("aria-selected", String(intake));
-  $("tabRank").setAttribute("aria-selected", String(!intake));
+  const views = {clarify:"clarifyView", score:"intakeView", rank:"rankView"};
+  const tabs  = {clarify:"tabClarify",  score:"tabIntake",  rank:"tabRank"};
+  for(const k of Object.keys(views)){
+    $(views[k]).hidden = (k!==which);
+    $(tabs[k]).setAttribute("aria-selected", String(k===which));
+  }
 }
-$("tabIntake").addEventListener("click", ()=>showTab("intake"));
+$("tabClarify").addEventListener("click", ()=>showTab("clarify"));
+$("tabIntake").addEventListener("click", ()=>showTab("score"));
 $("tabRank").addEventListener("click", ()=>showTab("rank"));
 
 /* ---------- ranking pass (the Option A compute, in-page) ---------- */
@@ -689,6 +769,224 @@ function renderRankSummary(r){
 }
 
 
+/* ---------- clarify: GTD routing pass (phase one) ---------- */
+function renderClarify(){
+  const list = $("clist"); list.innerHTML = "";
+  if(!state.ctasks.length){
+    const d = document.createElement("div"); d.className="empty";
+    d.innerHTML = "<b>Inbox zero.</b><br>Clarify done — capture can keep flowing.";
+    list.appendChild(d);
+  } else {
+    for(const t of state.ctasks) list.appendChild(clarifyCard(t));
+  }
+  updateQCount();
+}
+
+function resolveDest(kind){
+  if(kind==="someday")     return findProj(/^someday/i)  || findProj(/^archive$/i);
+  if(kind==="reference")   return findProj(/^reference/i)|| findProj(/^archive$/i);
+  if(kind==="projectfile") return findProj(/^project/i)  || findProj(/^reference/i) || findProj(/^archive$/i);
+  if(kind==="backlog")     return findProj(/^backlog$/i);
+  return null;
+}
+
+function clarifyCard(t){
+  const el = document.createElement("article"); el.className="task";
+  const body = document.createElement("div"); body.className="body"; el.appendChild(body);
+
+  const origTitle = t.content||"";
+  const title = document.createElement("input");
+  title.type="text"; title.className="title"; title.value=origTitle;
+  title.setAttribute("aria-label","Clarified next action"); body.appendChild(title);
+  if(t.description){
+    const od=document.createElement("div"); od.className="orig-desc"; od.textContent=t.description; body.appendChild(od);
+  }
+
+  const treeBox=document.createElement("div"); body.appendChild(treeBox);
+  const termBox=document.createElement("div"); termBox.hidden=true; body.appendChild(termBox);
+  const note=document.createElement("div"); note.className="task-note"; note.hidden=true; el.appendChild(note);
+  const actions=document.createElement("div"); actions.className="actions";
+  const restart=document.createElement("button"); restart.className="restart"; restart.textContent="↺ restart tree";
+  actions.appendChild(restart); el.appendChild(actions);
+
+  const ans = { multi:false, kind:null, labels:new Set(t.labels||[]) };
+  let dateInput=null, timeInput=null, saveBtn=null;
+
+  const say=(msg,warn)=>{ note.textContent=msg||""; note.hidden=!msg; note.style.color = warn?"var(--hot)":"var(--warn)"; };
+  const vanish=()=>{ el.classList.add("gone"); setTimeout(()=>{ el.remove(); bumpCount(); },250); };
+  const busy=b=>{ el.querySelectorAll("button").forEach(x=>x.disabled=b); };
+
+  async function doApi(fn, okMsg){
+    busy(true); say("");
+    try{ await fn(); if(okMsg) setStatus(okMsg); vanish(); }
+    catch(err){ say(err.message, true); busy(false); }
+  }
+  const moveTo=(kind)=>{
+    const p=resolveDest(kind);
+    if(!p){ say("No matching project found (looked for "+kind+", Archive). Create one in Todoist.", true); return; }
+    doApi(async ()=>{
+      await api("/tasks/"+t.id, {method:"POST", body: JSON.stringify({content:title.value.trim()||origTitle})});
+      await api("/tasks/"+t.id+"/move", {method:"POST", body: JSON.stringify({project_id:p.id})});
+    }, "Filed to "+p.name);
+  };
+
+  // --- decision tree (GTD spec §3) ---
+  function ask(text, options){
+    const q=document.createElement("div"); q.className="qrow";
+    const lab=document.createElement("span"); lab.className="qtext"; lab.textContent=text; q.appendChild(lab);
+    for(const [label, fn, cls] of options){
+      const b=document.createElement("button"); b.type="button"; b.textContent=label;
+      if(cls) b.className=cls;
+      b.addEventListener("click", ()=>{
+        if(cls==="danger" && !b.classList.contains("armed")){ b.classList.add("armed"); b.textContent="Confirm: "+label; return; }
+        q.classList.add("answered"); b.classList.add("chosen");
+        q.querySelectorAll("button").forEach(x=>{ if(x!==b) x.disabled=true; });
+        fn();
+      });
+      q.appendChild(b);
+    }
+    treeBox.appendChild(q);
+  }
+
+  function qActionable(){ ask("Actionable?", [["Yes", qASAP], ["No", qForProject]]); }
+  function qForProject(){ ask("For a project?", [["Yes — project file", ()=>moveTo("projectfile")], ["No", qRemember]]); }
+  function qRemember(){ ask("Need to remember it?", [["Yes", qRemind], ["No — trash", ()=>doApi(()=>api("/tasks/"+t.id,{method:"DELETE"}), "Trashed"), "danger"]]); }
+  function qRemind(){ ask("Want to be reminded?", [["Yes — Someday/Maybe", somedayPanel], ["No — Reference", ()=>moveTo("reference")]]); }
+  function qASAP(){ ask("ASAP?", [["Yes", qTwoMin], ["No", qMulti]]); }
+  function qTwoMin(){ ask("Under 2 minutes?", [["Yes — just do it ✓", ()=>doApi(()=>api("/tasks/"+t.id+"/close",{method:"POST"}), "Done — closed"), "go"], ["No", qMulti]]); }
+  function qMulti(){
+    ask("Multi-step?", [
+      ["Yes — it's a project", ()=>{ ans.multi=true;
+        const w=document.createElement("div"); w.className="split-warn";
+        w.textContent="Project: rewrite the title above as the single next physical action. The original title is kept as a project: line.";
+        treeBox.appendChild(w); qDelegate(); }],
+      ["No", qDelegate]
+    ]);
+  }
+  function qDelegate(){ ask("Can you delegate it?", [["Yes → Waiting", ()=>terminal("waiting")], ["No", qMeeting]]); }
+  function qMeeting(){ ask("Is this a meeting?", [["Yes → Agenda", ()=>terminal("agenda")], ["No", qTrip]]); }
+  function qTrip(){ ask("Trip required?", [["Yes → Errand", ()=>terminal("errand")], ["No", qTime]]); }
+  function qTime(){ ask("Specific time?", [["Yes → Calendar", ()=>terminal("calendar")], ["No → Next Action", ()=>terminal("next_action")]]); }
+
+  function somedayPanel(){
+    const w=document.createElement("div"); w.className="qrow";
+    const lab=document.createElement("span"); lab.className="qtext"; lab.textContent="Tickler date (optional):"; w.appendChild(lab);
+    const d=document.createElement("input"); d.type="date"; w.appendChild(d);
+    const go=document.createElement("button"); go.className="primary"; go.textContent="File to Someday";
+    go.addEventListener("click", ()=>{
+      const p=resolveDest("someday");
+      if(!p){ say("No Someday or Archive project found.", true); return; }
+      doApi(async ()=>{
+        const payload={content:title.value.trim()||origTitle};
+        if(d.value) payload.due_date=d.value;
+        await api("/tasks/"+t.id, {method:"POST", body: JSON.stringify(payload)});
+        await api("/tasks/"+t.id+"/move", {method:"POST", body: JSON.stringify({project_id:p.id})});
+      }, "Filed to "+p.name);
+    });
+    w.appendChild(go); treeBox.appendChild(w);
+  }
+
+  // --- terminal: disposition + GTD §4 contexts ---
+  function obligOf(cfg, key){ return cfg.musts.includes(key) ? "must" : cfg.shoulds.includes(key) ? "should" : null; }
+
+  function ctxRow(key, cfg){
+    const [name, rx]=CTX[key];
+    const names=state.labels.map(l=>l.name).filter(n=>rx.test(n)).sort();
+    if(!names.length) return null;
+    const row=document.createElement("div"); row.className="dimrow";
+    const lab=document.createElement("div"); lab.className="dim-label"; lab.textContent=name;
+    const ob=obligOf(cfg,key);
+    if(ob){ const s=document.createElement("span"); s.className="oblig"+(ob==="should"?" should":""); s.textContent=ob; lab.appendChild(s); }
+    row.appendChild(lab);
+    const chips=document.createElement("div"); chips.className="chips"; row.appendChild(chips);
+    for(const n of names){
+      const b=document.createElement("button"); b.type="button"; b.className="tagchip";
+      b.textContent=n.replace(rx,""); b.title="@"+n;
+      b.setAttribute("aria-pressed", String(ans.labels.has(n)));
+      b.addEventListener("click", ()=>{
+        ans.labels.has(n) ? ans.labels.delete(n) : ans.labels.add(n);
+        b.setAttribute("aria-pressed", String(ans.labels.has(n)));
+        validate();
+      });
+      chips.appendChild(b);
+    }
+    return row;
+  }
+
+  function terminal(kind){
+    ans.kind=kind;
+    const cfg=TERMINALS[kind];
+    termBox.hidden=false; termBox.innerHTML="";
+    const pill=document.createElement("div"); pill.className="pill"; pill.textContent=cfg.title; termBox.appendChild(pill);
+
+    for(const key of ["who","where","duration","area"]){
+      const row=ctxRow(key,cfg); if(row) termBox.appendChild(row);
+    }
+    const dates=document.createElement("div"); dates.className="dates";
+    const dw=document.createElement("div");
+    const dl=document.createElement("label"); dl.className="fld"; dl.textContent=cfg.dateLabel;
+    if(cfg.musts.includes("date")){ const s=document.createElement("span"); s.className="oblig"; s.textContent=" · must"; s.style.display="inline"; dl.appendChild(s); }
+    dateInput=document.createElement("input"); dateInput.type="date";
+    dateInput.addEventListener("change", validate);
+    dw.appendChild(dl); dw.appendChild(dateInput); dates.appendChild(dw);
+    if(cfg.time){
+      const tw=document.createElement("div");
+      const tl=document.createElement("label"); tl.className="fld"; tl.textContent="Time (optional)";
+      timeInput=document.createElement("input"); timeInput.type="time"; timeInput.className="timefld";
+      tw.appendChild(tl); tw.appendChild(timeInput); dates.appendChild(tw);
+    } else timeInput=null;
+    termBox.appendChild(dates);
+
+    saveBtn=document.createElement("button"); saveBtn.className="primary"; saveBtn.textContent="File to Backlog (unscored)";
+    saveBtn.addEventListener("click", saveTerminal);
+    const a=document.createElement("div"); a.className="qrow"; a.appendChild(saveBtn); termBox.appendChild(a);
+    validate();
+  }
+
+  function missingMusts(){
+    const cfg=TERMINALS[ans.kind]; const miss=[];
+    for(const m of cfg.musts){
+      if(m==="date"){ if(!dateInput || !dateInput.value) miss.push("date"); }
+      else { const rx=CTX[m][1]; if(![...ans.labels].some(n=>rx.test(n))) miss.push(m); }
+    }
+    return miss;
+  }
+  function validate(){
+    if(!saveBtn) return;
+    const miss=missingMusts();
+    saveBtn.disabled=miss.length>0;
+    say(miss.length ? "Required context missing: "+miss.join(", ")+" (solid line — task isn't recoverable without it)" : "");
+  }
+
+  function saveTerminal(){
+    if(!state.backlogId){ say("No Backlog project — create one in Todoist.", true); return; }
+    const labels=[...ans.labels]; if(!labels.includes(ans.kind)) labels.push(ans.kind);
+    let desc=t.description||"";
+    if(ans.multi) desc=("project: "+origTitle+(desc?"\n"+desc:""));
+    const payload={content:title.value.trim()||origTitle, description:desc, labels};
+    if(dateInput && dateInput.value){
+      if(timeInput && timeInput.value) payload.due_string=dateInput.value+" "+timeInput.value;
+      else payload.due_date=dateInput.value;
+    }
+    doApi(async ()=>{
+      await api("/tasks/"+t.id, {method:"POST", body: JSON.stringify(payload)});
+      if(t.project_id!==state.backlogId)
+        await api("/tasks/"+t.id+"/move", {method:"POST", body: JSON.stringify({project_id:state.backlogId})});
+    }, "Routed to Backlog · @"+ans.kind);
+  }
+
+  restart.addEventListener("click", ()=>{
+    treeBox.innerHTML=""; termBox.hidden=true; termBox.innerHTML="";
+    ans.multi=false; ans.kind=null; ans.labels=new Set(t.labels||[]);
+    dateInput=timeInput=saveBtn=null; say("");
+    qActionable();
+  });
+
+  qActionable();
+  return el;
+}
+
+/* ---------- timebox (§8.2) ---------- */
 let timerId=null, remain=30*60;
 $("timer").addEventListener("click", ()=>{
   const btn=$("timer");
