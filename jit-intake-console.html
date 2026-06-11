@@ -146,7 +146,7 @@
 <body>
 <div class="wrap">
   <header class="bar">
-    <div class="wordmark">JIT<span class="dim">/console</span><span class="ver">v1.3.1</span></div>
+    <div class="wordmark">JIT<span class="dim">/console</span><span class="ver">v1.4</span></div>
     <div class="queue-count" id="qcount"></div>
     <div class="spacer"></div>
     <button id="timer" title="Spec §8.2 — intake is timeboxed">▸ 30:00 timebox</button>
@@ -235,6 +235,7 @@ const CTX = {                                     // phase one: recoverability c
   who:      ["Who",      /^who[-_]/i],
   where:    ["Where",    /^where[-_]/i],
   duration: ["Duration", /^duration[-_]/i],
+  project:  ["Project",  /^project[-_]/i],
 };
 // GTD §4.3 context-to-task mapping. must = solid line, should = dashed; everything else may.
 const TERMINALS = {
@@ -686,10 +687,14 @@ async function runRank(){
     let tasks=[];
     for(const id of ids) tasks=tasks.concat(await listAll("/tasks?project_id="+encodeURIComponent(id)));
 
+    const parentIds = new Set(tasks.filter(x=>x.parent_id).map(x=>x.parent_id));
+    let planSkipped=0;
+
     const today=todayISO();
     const ranked=[], unscored=[], stale=[], shapeErr=[], changes=[], cmds=[];
 
     for(const t of tasks){
+      if(t.parent_id || parentIds.has(t.id)){ planSkipped++; continue; }   // project plans & their steps don't flow (only extracted next actions do)
       const s=parseScore(t.description);
       if(!s){ unscored.push(t.content); continue; }
 
@@ -726,7 +731,7 @@ async function runRank(){
 
     setStatus(cmds.length ? `Writing ${cmds.length} update${cmds.length>1?"s":""}…` : "Computing…");
     const failed = cmds.length ? await syncWrite(cmds) : [];
-    renderRankSummary({ranked, unscored, stale, shapeErr, changes, written:cmds.length, failed});
+    renderRankSummary({ranked, unscored, stale, shapeErr, changes, written:cmds.length, failed, planSkipped});
     setStatus("");
   }catch(err){ setStatus("Ranking pass failed: "+err.message, true); }
   btn.disabled=false;
@@ -743,7 +748,7 @@ function renderRankSummary(r){
   const out=$("rankOut"); out.hidden=false;
   r.ranked.sort((a,b)=> (b.override-a.override) || (b.w-a.w));
   const hot=r.ranked.filter(x=>x.override);
-  let h=`<h3>Run</h3><div>${r.ranked.length} scored item${r.ranked.length===1?"":"s"} ranked · ${r.written} written back · ${r.ranked.length-r.written} unchanged</div>`;
+  let h=`<h3>Run</h3><div>${r.ranked.length} scored item${r.ranked.length===1?"":"s"} ranked · ${r.written} written back · ${r.ranked.length-r.written} unchanged${r.planSkipped?` · ${r.planSkipped} plan item${r.planSkipped===1?"":"s"} skipped (parents/subtasks)`:""}</div>`;
 
   if(hot.length){
     h+=`<h3>Overdue-to-start — pull first, no debate</h3><ul>`+
@@ -811,7 +816,7 @@ function clarifyCard(t){
   actions.appendChild(restart); el.appendChild(actions);
 
   const ans = { multi:false, kind:null, labels:new Set(t.labels||[]) };
-  let dateInput=null, timeInput=null, saveBtn=null;
+  let dateInput=null, timeInput=null, saveBtn=null, projInput=null;
 
   const say=(msg,warn)=>{ note.textContent=msg||""; note.hidden=!msg; note.style.color = warn?"var(--hot)":"var(--warn)"; };
   const vanish=()=>{ el.classList.add("gone"); setTimeout(()=>{ el.remove(); bumpCount(); },250); };
@@ -857,12 +862,22 @@ function clarifyCard(t){
   function qTwoMin(){ ask("Under 2 minutes?", [["Yes — just do it ✓", ()=>doApi(()=>api("/tasks/"+t.id+"/close",{method:"POST"}), "Done — closed"), "go"], ["No", qMulti]]); }
   function qMulti(){
     ask("Multi-step?", [
-      ["Yes — it's a project", ()=>{ ans.multi=true;
-        const w=document.createElement("div"); w.className="split-warn";
-        w.textContent="Project: rewrite the title above as the single next physical action. The original title is kept as a project: line.";
-        treeBox.appendChild(w); qDelegate(); }],
+      ["Yes — it's a project", ()=>{ ans.multi=true; projectPanel(); qDelegate(); }],
       ["No", qDelegate]
     ]);
+  }
+  function projectPanel(){
+    const pf=findProj(/^project/i);
+    const w=document.createElement("div"); w.className="split-warn";
+    w.textContent = pf
+      ? "Project: rewrite the title above as the single next physical action. On save, the original wording is parked as a plan task in "+pf.name+", and both carry the project label below."
+      : "Project: rewrite the title above as the single next physical action. No Projects bucket found — the original title will be kept as a project: line instead. (Create a project starting with “Project” to enable plan parking.)";
+    treeBox.appendChild(w);
+    const row=document.createElement("div"); row.className="qrow";
+    const lab=document.createElement("span"); lab.className="qtext"; lab.textContent="@project- label:"; row.appendChild(lab);
+    projInput=document.createElement("input"); projInput.type="text"; projInput.style.flex="1";
+    projInput.value=origTitle.toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"").slice(0,40);
+    row.appendChild(projInput); treeBox.appendChild(row);
   }
   function qDelegate(){ ask("Can you delegate it?", [["Yes → Waiting", ()=>terminal("waiting")], ["No", qMeeting]]); }
   function qMeeting(){ ask("Is this a meeting?", [["Yes → Agenda", ()=>terminal("agenda")], ["No", qTrip]]); }
@@ -920,7 +935,7 @@ function clarifyCard(t){
     termBox.hidden=false; termBox.innerHTML="";
     const pill=document.createElement("div"); pill.className="pill"; pill.textContent=cfg.title; termBox.appendChild(pill);
 
-    for(const key of ["who","where","duration","area"]){
+    for(const key of ["who","where","duration","area","project"]){
       const row=ctxRow(key,cfg); if(row) termBox.appendChild(row);
     }
     const dates=document.createElement("div"); dates.className="dates";
@@ -959,27 +974,41 @@ function clarifyCard(t){
     say(miss.length ? "Required context missing: "+miss.join(", ")+" (solid line — task isn't recoverable without it)" : "");
   }
 
+  function projectLabel(){
+    if(!ans.multi || !projInput) return null;
+    const s=projInput.value.trim().toLowerCase().replace(/^project[-_]/,"")
+            .replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"").slice(0,40);
+    return s ? "project-"+s : null;
+  }
   function saveTerminal(){
     if(!state.backlogId){ say("No Backlog project — create one in Todoist.", true); return; }
     const labels=[...ans.labels]; if(!labels.includes(ans.kind)) labels.push(ans.kind);
+    const plabel=projectLabel(); if(plabel && !labels.includes(plabel)) labels.push(plabel);
+    const pf = ans.multi ? findProj(/^project/i) : null;
     let desc=t.description||"";
-    if(ans.multi) desc=("project: "+origTitle+(desc?"\n"+desc:""));
+    if(ans.multi && !pf) desc=("project: "+origTitle+(desc?"\n"+desc:""));   // no Projects bucket: lineage line fallback
     const payload={content:title.value.trim()||origTitle, description:desc, labels};
     if(dateInput && dateInput.value){
       if(timeInput && timeInput.value) payload.due_string=dateInput.value+" "+timeInput.value;
       else payload.due_date=dateInput.value;
     }
     doApi(async ()=>{
+      if(pf){   // park the plan: a new parent task in the Projects bucket holds the original wording
+        const parent={content:origTitle, project_id:pf.id};
+        if(t.description) parent.description=t.description;
+        if(plabel) parent.labels=[plabel];
+        await api("/tasks", {method:"POST", body: JSON.stringify(parent)});
+      }
       await api("/tasks/"+t.id, {method:"POST", body: JSON.stringify(payload)});
       if(t.project_id!==state.backlogId)
         await api("/tasks/"+t.id+"/move", {method:"POST", body: JSON.stringify({project_id:state.backlogId})});
-    }, "Routed to Backlog · @"+ans.kind);
+    }, pf ? "Plan parked in "+pf.name+" · next action → Backlog" : "Routed to Backlog · @"+ans.kind);
   }
 
   restart.addEventListener("click", ()=>{
     treeBox.innerHTML=""; termBox.hidden=true; termBox.innerHTML="";
     ans.multi=false; ans.kind=null; ans.labels=new Set(t.labels||[]);
-    dateInput=timeInput=saveBtn=null; say("");
+    dateInput=timeInput=saveBtn=projInput=null; say("");
     qActionable();
   });
 
