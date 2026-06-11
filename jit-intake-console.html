@@ -146,7 +146,7 @@
 <body>
 <div class="wrap">
   <header class="bar">
-    <div class="wordmark">JIT<span class="dim">/console</span><span class="ver">v1.3</span></div>
+    <div class="wordmark">JIT<span class="dim">/console</span><span class="ver">v1.3.1</span></div>
     <div class="queue-count" id="qcount"></div>
     <div class="spacer"></div>
     <button id="timer" title="Spec §8.2 — intake is timeboxed">▸ 30:00 timebox</button>
@@ -310,7 +310,8 @@ $("dstSel").addEventListener("change", e => { state.dstId = e.target.value; });
   if(saved){ $("token").value = saved; $("remember").checked = true; }
 })();
 
-function findProj(rx){ return state.projects.find(p => rx.test(p.name||"")); }
+const cleanName = n => (n||"").replace(/^[^\p{L}\p{N}]+/u, "").trim();   // strip emoji/symbol prefixes
+function findProj(rx){ return state.projects.find(p => rx.test(cleanName(p.name))); }
 
 async function connect(){
   state.token = $("token").value.trim();
@@ -622,7 +623,7 @@ function buildScope(){
     if(p.inbox_project) continue;
     const l=document.createElement("label"); l.className="check";
     const c=document.createElement("input"); c.type="checkbox"; c.value=p.id;
-    c.checked = /^(eligible|backlog)$/i.test(p.name||"");
+    c.checked = /^(eligible|backlog)$/i.test(cleanName(p.name));
     l.appendChild(c); l.append(" "+p.name);
     row.appendChild(l);
   }
@@ -783,9 +784,9 @@ function renderClarify(){
 }
 
 function resolveDest(kind){
-  if(kind==="someday")     return findProj(/^someday/i)  || findProj(/^archive$/i);
-  if(kind==="reference")   return findProj(/^reference/i)|| findProj(/^archive$/i);
-  if(kind==="projectfile") return findProj(/^project/i)  || findProj(/^reference/i) || findProj(/^archive$/i);
+  if(kind==="someday")     return findProj(/^someday/i)  || findProj(/^archived?$/i);
+  if(kind==="reference")   return findProj(/^reference/i)|| findProj(/^archived?$/i);
+  if(kind==="projectfile") return findProj(/^project/i)  || findProj(/^reference/i) || findProj(/^archived?$/i);
   if(kind==="backlog")     return findProj(/^backlog$/i);
   return null;
 }
